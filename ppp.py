@@ -9,8 +9,8 @@ from autocall_pricer import (            # 上一步封装好的函数
 )
 
 # ---------- 0. 连接 FPF ----------
-env = {"name": "axel", "password": "gnud2458927qeqhn745"}
-fpf = sync("mkcoe04", 3456, env)
+env = {"name": "111", "password": "111"}
+fpf = sync("11", 11, env)
 
 # ---------- 1. 读取 strikes & spot ----------
 vol_handle   = {"get": {"what": "volatility index", "id": "NDX.IDX"}}
