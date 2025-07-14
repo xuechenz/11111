@@ -27,7 +27,7 @@ for i, strike_abs in enumerate(strikes_abs):
         resp = fpf(req)
         pv_after = float(resp["Premium Price"]) 
         vega_matrix[i, j] = (pv_after - pv_before) / BUMP_SIZE
-        print(f"Strike {strike_abs}, Tenor {tenor_grid}: Vega = {vega_matrix[i, j]:.6f}")
+        print(f"Strike {strike_abs}, Bump {bump_list}: Vega = {vega_matrix[i, j]:.6f}")
 
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
