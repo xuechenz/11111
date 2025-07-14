@@ -1,92 +1,87 @@
-from FPFServer import sync                     
-from term_sheet_classes import (             
-    BarrierShiftParameters,
-    TermSheet,
-    build_pricer_request,
+import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from typing import List
+from FPFServer import sync               # 你们已有的 API
+from autocall_pricer import (            # 上一步封装好的函数
+    build_pricer_request, TermSheet
 )
 
-env = {
-    "name":     "1",
-    "password": "1",
-}
-fpf = sync("1", 1, env)            
+# ---------- 0. 连接 FPF ----------
+env = {"name": "axel", "password": "gnud2458927qeqhn745"}
+fpf = sync("mkcoe04", 3456, env)
 
-vol_handle = {
-    "get": {
-        "what": "volatility index",
-        "id":   "NDX.IDX"
-    }
-}
-strike_meta = fpf(vol_handle)                  
-strikes_list = strike_meta["top"][0]["strikes"]
-strike_for_bump = [strikes_list[10]]         
+# ---------- 1. 读取 strikes & spot ----------
+vol_handle   = {"get": {"what": "volatility index", "id": "NDX.IDX"}}
+strike_meta  = fpf(vol_handle)           # 这里返回整张 vol surface meta
+spot         = strike_meta["spot"]
+strikes_abs  = strike_meta["strikes"]    # list[float]
 
+# 把绝对 strike → 百分比
+strikes_pct  = [k / spot for k in strikes_abs]
 
-bsp = BarrierShiftParameters(
-    Autocall_Absolute_Shift=[-0.0087, -0.0087, -0.0087, -0.0087],
-    Autocall_Shift_Dates=["2025-11-07","2026-02-09","2026-05-07","2026-08-07"],
-    Coupon_Absolute_Shift=[-0.0087, -0.0087, -0.0087, -0.0087],
-    Coupon_Absolute_Spread=[0.0174, 0.0174, 0.0174, 0.0174],
-    Coupon_Shift_Dates=["2025-11-07","2026-02-09","2026-05-07","2026-08-07"],
-    Maturity_Barrier_Absolute_Shift=-0.0087,
-    Maturity_Barrier_Absolute_Spread=0.0174,
-    Maturity_Barrier_Knock_Out_Levels_Absolute_Shift=[-0.0087],
-)
+# ---------- 2. 构建 tenor grid ----------
+tenor_months = list(range(0, 61, 6))     # 0m, 6m, …, 60m
+tenor_grid   = [f"{m}m" for m in tenor_months]
 
-ts = TermSheet(
-    Accrues_When="Inside Range",
-    Autocall_Barrier=[1, 1, 1, 1],
-    Autocall_Dates=["2025-11-07","2026-02-09","2026-05-07","2026-08-07"],
-    Autocall_Ex_Dates=["2025-11-10","2026-02-10","2026-05-08","2026-08-10"],
-    Autocall_Pay_Dates=["2025-11-12","2026-02-12","2026-05-12","2026-08-12"],
-    Basket_Level_Type="Weighted Sum of Asset Returns",
-    Basket_Weights=[1],
-    Coupon_Determination_Dates=["2025-11-10","2026-02-09","2026-05-07","2026-08-07"],
-    Coupon_Determination_Ex_Dates=["2025-11-10","2026-02-10","2026-05-08","2026-08-10"],
-    Coupon_Low_Barrier=[0.7, 0.7, 0.7, 0.7],
-    Coupon_Memory_Cutoff_Dates=["2026-08-07"]*4,
-    Coupon_Memory_Multiplier=[1, 1, 1, 1],
-    Coupon_Multiple_Observation_Barrier_Type="Knock-Out",
-    Coupon_Pay_Dates=["2025-11-12","2026-02-12","2026-05-12","2026-08-12"],
-    Daycount_Basis="ACT/365",
-    Downside_Participation=1,
-    Fixed_Return=[0, 0, 0, 0],
-    Floating_Payment_Multiplier=-1,
-    Guaranteed_Minimum_Maturity_Return=0,
-    Initial_Levels=[22726.012561111645],
-    Is_Note=True,
-    Maturity_Barrier=0.7,
-    Maturity_Date="2026-08-07",
-    Maturity_Option_Barrier_Type="Knock-In",
-    Maturity_Settlement_Date="2026-08-12",
-    Participation=[0, 0, 0, 0],
-    Participation_With_Memory_Coupons=[0, 0, 0, 0],
-    Pay_ID="USD",
-    Premium_Settlement_Date="2025-07-10",
-    Return_Notional_At_Recall=True,
-    Stock_IDs=["NDX.IDX"],
-    Strike_Setting_Date=["2025-07-07"],
-    Variable_Coupon_Strike=[1, 1, 1, 1],
-    Variable_Coupon_Strike_With_Memory_Coupons=[0, 0, 0, 0, 0],
-    Barrier_Shift_Parameters=bsp,
-)
+# ---------- 3. 预先准备 TermSheet ----------
+# （示例：ts 已在前一段代码里构造，这里直接复用）
+ts = your_prepared_termsheet
 
+# ---------- 4. 循环请求 Vega ----------
+vega_matrix = np.zeros((len(strikes_pct), len(tenor_grid)))
 
-tenor_grid        = ["3m", "6m", "9m", "12m"]
-tenor_bump_sizes  = [0, 0.0025, 0, 0]
+for i_strike, strike_abs in enumerate(strikes_abs):
+    for j_tenor, tenor in enumerate(tenor_grid):
+        # 构造 bump 矩阵：只有 [i_strike, j_tenor] 是 0.0025 其余都 0
+        bump_mat = np.zeros((len(strikes_pct), len(tenor_grid)))
+        bump_mat[i_strike, j_tenor] = 0.0025
+        
+        req = build_pricer_request(
+            term_sheet       = ts,
+            strikes          = strike_abs,          # 单个 float
+            tenors           = tenor_grid,
+            tenor_bump_sizes = bump_mat.tolist(),   # 2-D list
+            max_paths        = 100000,              # 视需要调整
+        )
+        resp = fpf(req)                 # 发送
+        vega_matrix[i_strike, j_tenor] = resp["Vega"]  # <——按实际字段改
 
-request_dict = build_pricer_request(
-    term_sheet        = ts,
-    strikes           = strike_for_bump,  
-    tenors            = tenor_grid,
-    tenor_bump_sizes  = tenor_bump_sizes,
-    bump_size_abs     = 0.0025,
-    stock_ids         = ["NDX.IDX"],
-    max_paths         = 5000             
-)
+# ---------- 5. 画热力图 ----------
+fig, ax = plt.subplots(figsize=(10, 6))
 
+# x 轴：年份
+x = np.array(tenor_months) / 12         # months → years
+# y 轴：strike pct
+y = np.array(strikes_pct)
 
-response = fpf(request_dict)
+c = ax.pcolormesh(x, y, vega_matrix, shading="auto")
+fig.colorbar(c, ax=ax, label="Vega")
 
-print("Vega  (abs bump 25bp, strike idx=10, tenor 6m):",
-      response["greeks"]["Vega"])
+ax.set_xlabel("Tenor (years)")
+ax.set_ylabel("Strike / Spot")
+ax.set_title("Autocallable Note Vega Map")
+
+plt.tight_layout()
+plt.show()
+
+from pathlib import Path
+import matplotlib.pyplot as plt
+# ...（前面的代码同上，生成 fig / ax / vega_matrix 等）...
+
+# 5. 画热力图
+fig, ax = plt.subplots(figsize=(10, 6))
+c = ax.pcolormesh(x, y, vega_matrix, shading="auto")
+fig.colorbar(c, ax=ax, label="Vega")
+ax.set_xlabel("Tenor (years)")
+ax.set_ylabel("Strike / Spot")
+ax.set_title("Autocallable Note Vega Map")
+plt.tight_layout()
+
+# ---------- 把图保存到 Temp/ 目录 ----------
+out_dir = Path("Temp")          # or Path("/mnt/data/Temp") 若你想放到绝对路径
+out_dir.mkdir(parents=True, exist_ok=True)   # 如果目录不存在就创建
+fig.savefig(out_dir / "vega_map.png", dpi=300, bbox_inches="tight")
+
+plt.close(fig)  # 不再弹窗显示，节省内存
