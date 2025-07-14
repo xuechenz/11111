@@ -1,33 +1,33 @@
-BUMP_SIZE = 0.0025
-zero_bump = [0.0] * n_tenor  
+BUMP_SIZE      = 0.0025
+zero_bump_list = [0.0] * len(tenor_grid)
 
 req_base  = build_pricer_request(
     term_sheet       = ts,
-    strikes          = strikes_abs[0],    
+    strikes          = strikes_abs[0],  
     tenors           = tenor_grid,
-    tenor_bump_sizes = zero_bump,
+    tenor_bump_sizes = zero_bump_list,
     max_paths        = 100_000,
 )
 pv_before = float(fpf(req_base)["Premium Price"])
 print(f"Baseline Premium = {pv_before:.6f}")
 
+
 for i, strike_abs in enumerate(strikes_abs):
-    for j in range(n_tenor):
+    for j, tenor in enumerate(tenor_grid):
 
-        bump_list = [BUMP_SIZE if k == j else 0.0 for k in range(n_tenor)]
+        bump_list = [BUMP_SIZE if k == j else 0.0 for k in range(len(tenor_grid))]
 
-        req_bump  = build_pricer_request(
+        req = build_pricer_request(
             term_sheet       = ts,
             strikes          = strike_abs,
             tenors           = tenor_grid,
             tenor_bump_sizes = bump_list,
             max_paths        = 100_000,
         )
-        pv_after  = float(fpf(req_bump)["Premium Price"])
-
+        resp = fpf(req)
+        pv_after = float(resp["Premium Price"]) 
         vega_matrix[i, j] = (pv_after - pv_before) / BUMP_SIZE
-        print(f"PV Before:{pv_before:.4e}; PV After {pv_after:.4e}")
-
+        print(f"Strike {strike_abs}, Tenor {tenor}: Vega = {vega_matrix[i, j]:.6f}")
 
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
@@ -56,3 +56,17 @@ ax.set_ylabel("Strike / Spot")
 ax.set_title("Autocallable Note — Vega Map")
 plt.tight_layout()
 plt.show()
+
+out_dir = Path("Temp")
+out_dir.mkdir(parents=True, exist_ok=True)
+
+fig.savefig(out_dir / "vega_map.png", dpi=300, bbox_inches="tight")
+plt.close(fig)                    
+
+pd.DataFrame(
+    vega_matrix,
+    index=strikes_pct, 
+    columns=tenor_grid
+).to_csv(out_dir / "vega_map.csv")
+
+print(f"PNG and CSV saved to -> {out_dir.resolve()}")
