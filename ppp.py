@@ -26,7 +26,7 @@ for i, strike_abs in enumerate(strikes_abs):
         pv_after  = float(fpf(req_bump)["Premium Price"])
 
         vega_matrix[i, j] = (pv_after - pv_before) / BUMP_SIZE
-        print(f"PV Before:{pv_before:.4e}; PV After {pv_after:.4e})
+        print(f"PV Before:{pv_before:.4e}; PV After {pv_after:.4e}")
 
 
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
