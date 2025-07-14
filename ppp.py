@@ -1,13 +1,15 @@
 """
-Dash App – Vega Map Generator  (UI v2 - Sidebar + Accordions)
-==============================================================
-* Fixed **Sidebar** with collapsible Accordions (General ▸ Autocall ▸ Coupon ▸ Maturity ▸ Returns ▸ Barrier Shifts)
-* Top dark Navbar **Vega Map Generator** with placeholder logo `<img id="company-logo">`
-* Right main panel: Tabs (JSON preview, Vega Map) + download buttons
-* Only UI – callbacks for JSON / Vega still placeholder
+Dash App – Vega Map Generator  (UI v3 – Bump Tab added)
+========================================================
+* Sidebar (Accordion)  ➜ TermSheet inputs
+* **NEW Tab ‑ “Bump Settings”** on the main panel  
+  • input **Stock IDs**  
+  • input **Bump Sizes** (comma‑sep floats)  
+  • placeholder button “Save Bump Settings”
+* Other tabs unchanged: TermSheet JSON | Vega Map
 
-Run → `python term sheet_dashboard.py` then open http://localhost:8052
-Logo: put your file at `assets/company_logo.png`
+Run: `python term sheet_dashboard.py` → http://localhost:8052
+Place logo at `assets/company_logo.png`
 """
 
 import json
@@ -17,9 +19,10 @@ from dash import html, dcc, Input, Output, State, callback
 from autocall_pricer import TermSheet, BarrierShiftParameters
 
 # ---------------------------------------------------------------------
-# Default demo values (same as before)
+# Default demo values + bump defaults
 # ---------------------------------------------------------------------
 DEFAULTS = dict(
+    # ------- TermSheet core -------
     Accrues_When="Inside Range",
     Autocall_Barrier="1, 1, 1, 1",
     Autocall_Dates="2025-11-07, 2026-02-09, 2026-05-07, 2026-08-07",
@@ -28,6 +31,7 @@ DEFAULTS = dict(
     Basket_Weights="1",
     Coupon_Determination_Dates="2025-11-10, 2026-02-09, 2026-05-07, 2026-08-07",
     Coupon_Low_Barrier="0.7, 0.7, 0.7, 0.7",
+    Coupon_Pay_Dates="2025-11-12, 2026-02-12, 2026-05-12, 2026-08-12",
     Coupon_Memory_Multiplier="1, 1, 1, 1",
     Daycount_Basis="ACT/365",
     Downside_Participation="1",
@@ -49,7 +53,7 @@ DEFAULTS = dict(
     Strike_Setting_Date="2025-07-07",
     Variable_Coupon_Strike="1, 1, 1, 1",
 
-    # Barrier shifts
+    # ------- Barrier shifts -------
     BSP_Autocall_Absolute_Shift="-0.0087, -0.0087, -0.0087, -0.0087",
     BSP_Autocall_Shift_Dates="2025-11-07, 2026-02-09, 2026-05-07, 2026-08-07",
     BSP_Coupon_Absolute_Shift="-0.0087, -0.0087, -0.0087, -0.0087",
@@ -58,6 +62,10 @@ DEFAULTS = dict(
     BSP_Maturity_Barrier_Absolute_Shift="-0.0087",
     BSP_Maturity_Barrier_Absolute_Spread="0.0174",
     BSP_Maturity_Barrier_Knock_Out_Levels_Absolute_Shift="-0.0087",
+
+    # ------- Bump defaults -------
+    Bump_Stock_IDs="NDX.IDX",
+    Bump_Sizes="0.0025"
 )
 
 # -------------------- helper factory --------------------
@@ -82,8 +90,7 @@ def bool_switch(id_, label, checked):
         options=[{"label": label, "value": "yes"}],
         value=["yes"] if checked else [],
         switch=True,
-        className="mb-2"
-    )
+        className="mb-2")
 
 # -------------------- form groups --------------------
 
@@ -142,12 +149,26 @@ sidebar = html.Div([
     dbc.Button("Generate Vega Map", id="btn-gen-vega", color="success", className="w-100 mt-2"),
 ], style={"position": "fixed", "top": "56px", "bottom": 0, "left": 0, "width": "340px", "padding": "10px", "overflowY": "auto", "backgroundColor": "#f8f9fa", "borderRight": "1px solid #ddd"})
 
-# Right content – shift right by sidebar width
-content_style = {"marginLeft": "350px", "padding": "20px"}
+# -------------------- Main content --------------------
 
+bump_tab = dcc.Tab(label="Bump Settings", children=[
+    dbc.Container([
+        textarea("bump_stock_ids", "Bump Stock IDs", DEFAULTS["Bump_Stock_IDs"]),
+        textarea("bump_sizes", "Bump Sizes", DEFAULTS["Bump_Sizes"]),
+        dbc.Button("Save Bump Settings", id="btn-save-bump", color="primary", className="mt-2"),
+    ], className="p-3")
+])
+
+content_style = {"marginLeft": "350px", "padding": "20px"}
+# -------------------- Main content --------------------
+
+# Bump Settings tab defined above
+
+content_style = {"marginLeft": "350px", "padding": "20px"}
 content = html.Div([
     dcc.Tabs([
         dcc.Tab(label="TermSheet JSON", children=[html.Pre(id="json-preview", className="small")]),
+        bump_tab,
         dcc.Tab(label="Vega Map", children=[dcc.Graph(id="vega-graph", style={"height": "600px"})]),
     ]),
     dbc.Row([
@@ -156,27 +177,17 @@ content = html.Div([
     ], className="mt-3 g-2"),
 ], style=content_style)
 
-# Navbar ---------------------------------------------------
-navbar = dbc.Navbar(
-    dbc.Container([
-        html.Img(id="company-logo", src="/assets/company_logo.png", height="40px"),
-        dbc.NavbarBrand("Vega Map Generator", className="ms-3 fw-bold")
-    ]),
-    color="dark", dark=True, sticky="top"
-)
-
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.layout = html.Div([
-    navbar,
-    sidebar,
-    content
-])
-
 # ----------------------- Callbacks -----------------------
 
 @callback(Output("json-preview", "children"), Input("btn-gen-json", "n_clicks"), prevent_initial_call=True)
 def build_json(_):
     return "（待接入 TermSheet 构造逻辑）"
+
+@callback(Output("bump_stock_ids", "value"), Input("btn-save-bump", "n_clicks"),
+          State("bump_stock_ids", "value"), State("bump_sizes", "value"), prevent_initial_call=True)
+def save_bump(_, ids, sizes):
+    # placeholder for saving bump configuration
+    return ids  # simply echo back
 
 # ---------------------------------------------------------
 if __name__ == "__main__":
