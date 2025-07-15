@@ -10,12 +10,13 @@ spot_handle = fpf({
 
 strike_meta = fpf({ "get": spot_handle })
 spot        = strike_meta["last"]
+print(spot)
 strike_abs = (
     [spot * pct for pct in [0.5, 0.6, 0.7, 0.8, 0.9]] +
     [spot * pct for pct in [x / 100 for x in range(92, 110, 2)]] +
     [spot * pct for pct in [1.1, 1.2, 1.3, 1.4, 1.5]]
 )
-
+print(strike_abs)
 
 
 
