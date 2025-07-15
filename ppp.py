@@ -17,7 +17,7 @@ for strike, pct in zip(strikes_abs, percent_strikes):
             step = 0.1
             if abs((pct * 10) % (step * 10)) < 1e-6:  
                 filtered_strikes.append(strike)
-percent_strikes = filtered_strikes
+strikes_abs = filtered_strikes
 
 spot_handle = fpf({
     "get": {
