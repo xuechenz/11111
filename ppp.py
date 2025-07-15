@@ -1,33 +1,3 @@
-# exp_termsheet.py
-
-# 1. Imports and connect to pricing engine
-import json
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from pathlib import Path
-from typing import List
-# sync establishes a TCP connection to the FPF pricing server
-from FPFServer import sync
-# TermSheet and build_pricer_request encapsulate the JSON schema for a structured note pricer
-from autocall_pricer import (
-    BarrierShiftParameters,
-    TermSheet,
-    build_pricer_request,
-)
-import time
-
-# record start time
-start_time = time.time()
-
-# 1.1 Connect to the FPFServer on host "mkcoe04", port 3456, using simple credentials
-env = {
-    "name": "***",
-    "password": "****"   
-}
-fpf = sync("***", ***, env)
-
-
 # 2. Build the TermSheet object
 
 # 2.1 Query volatility index metadata to obtain current spot and available strikes
