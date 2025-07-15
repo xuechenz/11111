@@ -1,3 +1,4 @@
+# Create shift-parameter object specifying how barriers and coupons adjust on key dates
 bsp = BarrierShiftParameters(
     Autocall_Absolute_Shift         = [-0.0087] * 12,
     Autocall_Shift_Dates            = [
@@ -6,7 +7,7 @@ bsp = BarrierShiftParameters(
         "2027-11-07", "2028-02-07", "2028-05-07", "2028-08-07",
     ],
     Coupon_Absolute_Shift           = [-0.0087] * 12,
-    Coupon_Absolute_Spread          = [0.0174, 0.0174, 0.0174, 0.0174],
+    Coupon_Absolute_Spread          = [0.0174] * 12,
     Coupon_Shift_Dates              = [
         "2025-11-07", "2026-02-07", "2026-05-07", "2026-08-07",
         "2026-11-07", "2027-02-07", "2027-05-07", "2027-08-07",
@@ -18,7 +19,7 @@ bsp = BarrierShiftParameters(
 )
 
 
-# 2.3 Construct the TermSheet instance with all product features
+# Construct the TermSheet instance with all product features
 ts = TermSheet(
     Accrues_When                           = "Inside Range",
     Autocall_Barrier                       = [1] * 12,
