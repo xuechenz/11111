@@ -1,83 +1,30 @@
-# Create shift-parameter object specifying how barriers and coupons adjust on key dates
-bsp = BarrierShiftParameters(
-    Autocall_Absolute_Shift         = [-0.0087] * 12,
-    Autocall_Shift_Dates            = [
-        "2025-11-07", "2026-02-07", "2026-05-07", "2026-08-07",
-        "2026-11-07", "2027-02-07", "2027-05-07", "2027-08-07",
-        "2027-11-07", "2028-02-07", "2028-05-07", "2028-08-07",
-    ],
-    Coupon_Absolute_Shift           = [-0.0087] * 12,
-    Coupon_Absolute_Spread          = [0.0174] * 12,
-    Coupon_Shift_Dates              = [
-        "2025-11-07", "2026-02-07", "2026-05-07", "2026-08-07",
-        "2026-11-07", "2027-02-07", "2027-05-07", "2027-08-07",
-        "2027-11-07", "2028-02-07", "2028-05-07", "2028-08-07",
-    ],
-    Maturity_Barrier_Absolute_Shift = -0.0087,
-    Maturity_Barrier_Absolute_Spread=  0.0174,
-    Maturity_Barrier_Knock_Out_Levels_Absolute_Shift = [-0.0087] * 12,
-)
+vol_handle = fpf({
+    "get": {
+        "what": "volatility index",
+        "id": "NDX.IDX"
+    }
+})["top"][0]
+strike_meta = fpf({ "get": vol_handle })
+strikes_abs = strike_meta["strikes"]
+strike_spot = strike_meta["spot"]
+percent_strikes = [strike / strike_spot for strike in strikes_abs]
+filtered_strikes = []
+for strike, pct in zip(strikes_abs, percent_strikes):
+    if 0.5 <= pct <= 1.5:
+        if 0.9 <= pct <= 1.1:
+            filtered_strikes.append(strike)
+        else:
+            step = 0.1
+            if abs((pct * 10) % (step * 10)) < 1e-6:  
+                filtered_strikes.append(strike)
+percent_strikes = filtered_strikes
 
+spot_handle = fpf({
+    "get": {
+        "what": "spot index",
+        "id": "NDX.IDX"
+    }
+})["top"][0]
 
-# Construct the TermSheet instance with all product features
-ts = TermSheet(
-    Accrues_When                           = "Inside Range",
-    Autocall_Barrier                       = [1] * 12,
-    Autocall_Dates                         = [
-        "2025-11-07", "2026-02-07", "2026-05-07", "2026-08-07",
-        "2026-11-07", "2027-02-07", "2027-05-07", "2027-08-07",
-        "2027-11-07", "2028-02-07", "2028-05-07", "2028-08-07",
-    ],
-    Autocall_Ex_Dates                      = [
-        "2025-11-10", "2026-02-10", "2026-05-10", "2026-08-10",
-        "2026-11-10", "2027-02-10", "2027-05-10", "2027-08-10",
-        "2027-11-10", "2028-02-10", "2028-05-10", "2028-08-10",
-    ],
-    Autocall_Pay_Dates                     = [
-        "2025-11-12", "2026-02-12", "2026-05-12", "2026-08-12",
-        "2026-11-12", "2027-02-12", "2027-05-12", "2027-08-12",
-        "2027-11-12", "2028-02-12", "2028-05-12", "2028-08-12",
-    ],
-    Basket_Level_Type                      = "Weighted Sum of Asset Returns",
-    Basket_Weights                         = [1],
-    Coupon_Determination_Dates             = [
-        "2025-11-10", "2026-02-10", "2026-05-07", "2026-08-07",
-        "2026-11-10", "2027-02-10", "2027-05-07", "2027-08-07",
-        "2027-11-10", "2028-02-10", "2028-05-07", "2028-08-07",
-    ],
-    Coupon_Determination_Ex_Dates          = [
-        "2025-11-10", "2026-02-10", "2026-05-10", "2026-08-10",
-        "2026-11-10", "2027-02-10", "2027-05-10", "2027-08-10",
-        "2027-11-10", "2028-02-10", "2028-05-10", "2028-08-10",
-    ],
-    Coupon_Low_Barrier                     = [0.7] * 12,
-    Coupon_Memory_Cutoff_Dates             = ["2028-08-07"] * 12 ,
-    Coupon_Memory_Multiplier               = [1] * 12,
-    Coupon_Multiple_Observation_Barrier_Type = "Knock-Out",
-    Coupon_Pay_Dates                       = [
-        "2025-11-12", "2026-02-12", "2026-05-12", "2026-08-12",
-        "2026-11-12", "2027-02-12", "2027-05-12", "2027-08-12",
-        "2027-11-12", "2028-02-12", "2028-05-12", "2028-08-12",
-    ],
-    Daycount_Basis                         = "ACT/365",
-    Downside_Participation                 = 1,
-    Fixed_Return                           = [0]*12,
-    Floating_Payment_Multiplier            = -1,
-    Guaranteed_Minimum_Maturity_Return     = 0,
-    Initial_Levels                         = [spot],
-    Is_Note                                = True,
-    Maturity_Barrier                       = 0.7,
-    Maturity_Date                          = "2028-08-07",
-    Maturity_Option_Barrier_Type           = "Knock-In",
-    Maturity_Settlement_Date               = "2028-08-12",
-    Participation                          = [0]*12,
-    Participation_With_Memory_Coupons      = [0]*12,
-    Pay_ID                                 = "USD",
-    Premium_Settlement_Date                = "2025-07-10",
-    Return_Notional_At_Recall              = True,
-    Stock_IDs                              = ["NDX.IDX"],
-    Strike_Setting_Date                    = ["2025-07-07"],
-    Variable_Coupon_Strike                 = [1]*12,
-    Variable_Coupon_Strike_With_Memory_Coupons = [0]*12,
-    Barrier_Shift_Parameters               = bsp,
-)
+spot_meta = fpf({ "get": spot_handle })
+spot        = spot_meta["last"]
