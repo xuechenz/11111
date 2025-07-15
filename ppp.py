@@ -1,6 +1,13 @@
-# 2. Build the TermSheet object
-
 # 2.1 Query volatility index metadata to obtain current spot and available strikes
+vol_handle = fpf({
+    "get": {
+        "what": "volatility index",
+        "id": "NDX.IDX"
+    }
+})["top"][0]
+strike_meta = fpf({ "get": vol_handle })
+strikes_abs = strike_meta["strikes"]
+
 spot_handle = fpf({
     "get": {
         "what": "spot index",
@@ -8,17 +15,8 @@ spot_handle = fpf({
     }
 })["top"][0]
 
-strike_meta = fpf({ "get": spot_handle })
-spot        = strike_meta["last"]
-print(spot)
-strike_abs = (
-    [spot * pct for pct in [0.5, 0.6, 0.7, 0.8, 0.9]] +
-    [spot * pct for pct in [x / 100 for x in range(92, 110, 2)]] +
-    [spot * pct for pct in [1.1, 1.2, 1.3, 1.4, 1.5]]
-)
-print(strike_abs)
-
-
+spot_meta = fpf({ "get": spot_handle })
+spot        = spot_meta["last"]
 
 # 2.2 Create shift-parameter object specifying how barriers and coupons adjust on key dates
 bsp = BarrierShiftParameters(
@@ -74,10 +72,9 @@ ts = TermSheet(
 
 
 # 3. Prepare strike-tenor grid and initialize Vega matrix
-
 strikes_pct = [k / spot for k in strikes_abs]
-tenor_months = list(range(0, 61, 3))             
-tenor_grid   = [f"{m}m" for m in tenor_months]  
+tenor_months = list(range(0, 61, 6))             # [0, 6, 12, ..., 60]
+tenor_grid   = [f"{m}m" for m in tenor_months]    # ["0m","6m",...,"60m"]
 n_strike, n_tenor = len(strikes_abs), len(tenor_grid)
 vega_matrix = np.zeros((n_strike, n_tenor))
 
