@@ -1,33 +1,16 @@
-def download_vega_png(n_clicks, matrix, strikes, avg_life, ts_dict):
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from io import BytesIO
-    from datetime import datetime
-
-    # regenerate data
-    spot, _ = fetch_spot_and_strikes(ts_dict["Stock IDs"][0])
-    barrier = ts_dict["Maturity Barrier"]
-    tenors = list(range(0, 61, 3))
-    vega_mat = np.array(matrix)
-    strikes_pct = [s/spot for s in strikes]
-
-    # plot with matplotlib
-    fig, ax = plt.subplots(figsize=(8, 6))
-    mesh = ax.pcolormesh(tenors, strikes_pct, vega_mat, cmap="RdYlGn", shading="auto")
-    fig.colorbar(mesh, ax=ax, label="Vega")
-    ax.set_xlabel("Tenor (months)")
-    ax.set_ylabel("Strike / Spot")
-    ax.set_title(f"{ts_dict['Stock IDs'][0]} Vega Map")
-    avg_m = int(round(avg_life * 12))
-    ax.axvline(avg_m, color="red", linestyle="--")
-    ax.axhline(barrier, color="red", linestyle="--")
-    ax.plot(avg_m, barrier, "ro")
-
-    buf = BytesIO()
-    fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
-    plt.close(fig)
+buf = BytesIO()
+    fig = make_heatmap(
+        strikes=matrix and list(ts_dict['Stock IDs']),
+        spot=fetch_spot_and_strikes(ts_dict['Stock IDs'][0])[0],
+        matrix=matrix,
+        tenors=[f"{m}m" for m in range(0, 61, 3)],
+        avg_life=avg_life,
+        barrier=ts_dict['Maturity Barrier'],
+        stock=ts_dict['Stock IDs'][0]
+    )
+    # Render to PNG bytes
+    fig.write_image(buf, format='png', width=800, height=600, scale=2)
     buf.seek(0)
-    img_bytes = buf.getvalue()
-
+    # Use send_bytes to stream bytes directly
     filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.png"
-    return {"content": img_bytes, "filename": filename}
+    return send_bytes(lambda out: out.write(buf.read()), filename)
