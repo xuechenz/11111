@@ -241,3 +241,52 @@ def download_png(n, matrix, strikes, avg_life):
 
 if __name__ == "__main__":
     app.run(debug=True, port=8052)
+
+@callback(
+    Output("json-preview", "children"),
+    Output("ts-store",      "data"),
+    Output("strikes-store", "data"),
+    Output("avg-life-store","data"),
+    Input("btn-gen-json",   "n_clicks"),
+    # 把下面这些都列为 State：所有你 UI 上能改的字段
+    State("acc_when",           "value"),
+    State("daycount_basis",     "value"),
+    State("pay_id",             "value"),
+    State("stock_ids",          "value"),
+    State("autocall_barrier",   "value"),
+    State("autocall_dates",     "value"),
+    State("autocall_ex_dates",  "value"),
+    # … 继续把每个 textarea/text_input/bool_switch 的 id 全部写进去 …
+    prevent_initial_call=True,
+)
+def on_generate_json(n_clicks,
+                     acc_when, daycount_basis, pay_id, stock_ids,
+                     autocall_barrier, autocall_dates, autocall_ex_dates,
+                     # … 其他 UI 字段 …):
+    # 1) 用每个参数直接构建 BarrierShiftParameters 和 TermSheet
+    bsp = BarrierShiftParameters(
+        Autocall_Absolute_Shift   = _parse_list(ui["bsp_autocall_shift"]),
+        # … 其余 bsp 字段 …
+    )
+    ts = TermSheet(
+        Accrues_When   = acc_when,
+        Daycount_Basis = daycount_basis,
+        Pay_ID         = pay_id,
+        Stock_IDs      = _parse_list(stock_ids, str),
+        Barrier_Shift_Parameters = bsp,
+        # … 其余 TermSheet 字段，都用最新的 UI 值 …
+    )
+    ts_dict = ts.to_dict()
+
+    # 2) 拉市场数据、算 avg_life 同之前
+    stock, strikes = _fetch_spot_and_strikes(ts_dict["Stock IDs"][0])
+    avg_req = build_pricer_request(ts, strikes[0], tenor_grid, [0.0]*len(tenor_grid))
+    avg_life = float(fpf(avg_req)["Average Lifetime"])
+
+    # 3) 生成预览 JSON
+    preview_req = build_pricer_request(ts, strikes[0], tenor_grid, [0.0]*len(tenor_grid))
+    preview = json.dumps(preview_req, indent=2)
+
+    # 4) 把最新 ts_dict, strikes, avg_life 存进去
+    return preview, ts_dict, strikes, avg_life
+
