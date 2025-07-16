@@ -290,3 +290,45 @@ def on_generate_json(n_clicks,
     # 4) 把最新 ts_dict, strikes, avg_life 存进去
     return preview, ts_dict, strikes, avg_life
 
+
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+@callback(
+    Output("vega-heatmap",    "figure"),
+    Output("vega-matrix-store","data"),
+    Output("progress-text",    "children"),
+    Output("btn-dl-vega-csv",  "disabled"),
+    Output("btn-dl-vega-png",  "disabled"),
+    Input("btn-gen-vega",      "n_clicks"),
+    State("ts-store",          "data"),
+    State("strikes-store",     "data"),
+    State("avg-life-store",    "data"),
+    prevent_initial_call=True
+)
+def on_generate_vega(n_clicks, ts_dict, strikes, avg_life):
+    ts = TermSheet(
+        **{k: v for k,v in ts_dict.items() if k != "Barrier Shift Parameters"},
+        Barrier_Shift_Parameters=BarrierShiftParameters(**ts_dict["Barrier Shift Parameters"])
+    )
+
+    tenors = [f"{m}m" for m in range(0, 61, 3)]
+    BUMP = 0.0025
+    matrix = [[0.0]*len(tenors) for _ in strikes]
+    with ThreadPoolExecutor(max_workers=8) as exe:
+        futures = {exe.submit(compute_vega_row, ts, s, tenors, BUMP, 100000): s for s in strikes}
+        for fut in as_completed(futures):
+            strike, row = fut.result()
+            idx = strikes.index(strike)
+            matrix[idx] = row
+
+    spot = fetch_spot_and_strikes(ts_dict["Stock IDs"][0])[0]
+    fig = make_heatmap(
+        strikes, spot, matrix, tenors,
+        avg_life,
+        ts_dict["Maturity Barrier"],
+        ts_dict["Stock IDs"][0]
+    )
+
+    prog = f"Completed Vega: {len(strikes)}/{len(strikes)} strikes"
+    return fig, matrix, prog, False, False
