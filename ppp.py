@@ -1,41 +1,46 @@
-def make_heatmap(strikes, spot, matrix, tenors, avg_life, barrier, stock):
-    x_vals = [int(t.rstrip("m")) for t in tenors]   
-    y_vals = [s/spot for s in strikes]
+import pandas as pd
+from dash import send_bytes
+from datetime import datetime
 
-    fig = go.Figure(
-       go.Heatmap(
-         x=x_vals,
-         y=y_vals,
-         z=matrix,
-         colorscale="RdYlGn",
-         zmid=0,
-         hovertemplate="Strike: %{y:.2f}<br>Tenor: %{x}m<br>Vega: %{z:.4f}<extra></extra>"
-       )
-    )
+@callback(
+    Output("dl-vega-csv", "data"),
+    Input("btn-dl-vega-csv", "n_clicks"),
+    State("vega-matrix-store", "data"),
+    State("strikes-store", "data"),
+    prevent_initial_call=True
+)
+def download_vega_csv(n_clicks, matrix, strikes):
+    tenors = [f"{m}m" for m in range(0, 61, 3)]
+    df = pd.DataFrame(matrix, index=strikes, columns=tenors)
 
-    fig.update_xaxes(
-      tickmode="array",
-      tickvals=x_vals,
-      ticktext=tenors,        
-      title="Tenor"
-    )
-    fig.update_yaxes(title="Strike / Spot")
+    csv_string = df.to_csv()
+    filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.csv"
+    return dict(content=csv_string, filename=filename)
 
-    avg_m = int(round(avg_life*12))
-    fig.add_vline(x=avg_m,
-                  line=dict(color="red", dash="dash"),
-                  annotation_text=f"Avg Life: {avg_m}m",
-                  annotation_position="top right")
 
-    fig.add_hline(y=barrier,
-                  line=dict(color="red", dash="dash"),
-                  annotation_text=f"Barrier: {barrier:.2f}",
-                  annotation_position="bottom left")
+@callback(
+    Output("dl-vega-png", "data"),
+    Input("btn-dl-vega-png", "n_clicks"),
+    State("vega-matrix-store", "data"),
+    State("strikes-store", "data"),
+    State("avg-life-store", "data"),
+    State("ts-store", "data"),
+    prevent_initial_call=True
+)
+def download_vega_png(n_clicks, matrix, strikes, avg_life, ts_dict):
+    bsp = BarrierShiftParameters(**ts_dict["Barrier Shift Parameters"])
+    ts = TermSheet(**{k:v for k,v in ts_dict.items() if k!="Barrier Shift Parameters"},
+                   Barrier_Shift_Parameters=bsp)
 
-    fig.add_trace(go.Scatter(x=[avg_m], y=[barrier],
-                             mode="markers",
-                             marker=dict(color="red", size=8),
-                             name="Intersection"))
+    tenors = [f"{m}m" for m in range(0, 61, 3)]
+    spot, _ = fetch_spot_and_strikes(ts_dict["Stock IDs"][0])
 
-    fig.update_layout(title=f"{stock} Vega Map")
-    return fig
+    fig = make_heatmap(strikes, spot, matrix, tenors,
+                       avg_life,
+                       ts_dict["Maturity Barrier"],
+                       ts_dict["Stock IDs"][0])
+
+    img_bytes = fig.to_image(format="png", width=800, height=600, scale=2)
+
+    filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.png"
+    return dict(content=img_bytes, filename=filename)
