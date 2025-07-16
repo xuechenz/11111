@@ -13,6 +13,6 @@ fig = go.Figure(
         zmin=-vmax,
         zmax=+vmax,
         zmid=0,
-        hovertemplate=hovertemplate
+        hovertemplate= "Strike: %{y:.2f}<br>Tenor: %{x}m<br>Vega: %{z:.4f}<extra></extra>"
     )
 )
