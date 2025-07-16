@@ -3,7 +3,7 @@ vmax = max(abs(matrix.min()), abs(matrix.max()))
 fig = go.Figure(
     go.Heatmap(
         z=matrix,
-        x=tenors,
+        x=x_vals,
         y=y_vals,
         colorscale=[
             [0.0, 'red'],    
