@@ -1,8 +1,3 @@
-Hey Denny, would you have 15–20 min sometime this week for a quick coffee chat? I’m always curious what Sales is really like day-to-day and how you guys actually work with the exotic desk. Totally flexible on timing!
+Hey Denny, I’m Annie, the quant intern on the exotic trading desk this summer.
 
-I have a quick question about Vega bumping for multi-asset structured notes.
-
-For single-asset products, we bump volatility tenor by tenor on a strike-tenor grid and get a simple 2D Vega[strike, tenor] map.
-
-For multi-asset products, do we usually just bump one asset at a time (keeping the others fixed),
-or do we also need to consider simultaneous bumps for all assets?
+I was wondering if you might have 15–20 min sometime this week for a quick coffee chat. I’m really curious what Sales is like day to day and how you guys work with the exotic desk. Totally flexible on timing!
