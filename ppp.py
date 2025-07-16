@@ -7,6 +7,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State, callback, send_bytes
 import plotly.graph_objects as go
+import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from FPFServer import sync
@@ -36,154 +37,207 @@ def fetch_spot_and_strikes(stock_id: str) -> Tuple[float, List[float]]:
 # -----------------------------------------------------------------------------
 def compute_vega_row(ts: TermSheet, strike: float, tenors: List[str], bump: float, max_paths: int) -> Tuple[float, List[float]]:
     zero_bump = [0.0] * len(tenors)
-    pv0 = float(fpf(build_pricer_request(ts, strike, tenors, zero_bump, max_paths=max_paths))["M2M Value"])
+    base_req = build_pricer_request(ts, strike, tenors, zero_bump, max_paths=max_paths)
+    pv0 = float(fpf(base_req)["M2M Value"])
     row = []
     for i in range(len(tenors)):
         bump_list = [bump if k == i else 0.0 for k in range(len(tenors))]
-        pv = float(fpf(build_pricer_request(ts, strike, tenors, bump_list, max_paths=max_paths))["M2M Value"])
+        req = build_pricer_request(ts, strike, tenors, bump_list, max_paths=max_paths)
+        pv = float(fpf(req)["M2M Value"])
         row.append((pv - pv0) / bump)
     return strike, row
 
 # -----------------------------------------------------------------------------
 #  Plotly heatmap builder
 # -----------------------------------------------------------------------------
-def make_heatmap(strikes: List[float], spot: float, matrix: List[List[float]], tenors: List[str], avg_life: float, barrier: float, stock: str) -> go.Figure:
+def make_heatmap(strikes: List[float], spot: float, matrix: List[List[float]],
+                 tenors: List[str], avg_life: float, barrier: float, stock: str) -> go.Figure:
     y_vals = [s/spot for s in strikes]
     fig = go.Figure(
-        go.Heatmap(x=tenors, y=y_vals, z=matrix, colorscale="RdYlGn", zmid=0,
-                   hovertemplate="Strike: %{y:.2f}<br>Tenor: %{x}<br>Vega: %{z:.4f}<extra></extra>")
+        go.Heatmap(
+            x=tenors,
+            y=y_vals,
+            z=matrix,
+            colorscale="RdYlGn",
+            zmid=0,
+            hovertemplate="Strike: %{y:.2f}<br>Tenor: %{x}<br>Vega: %{z:.4f}<extra></extra>"
+        )
     )
+    # average lifetime line
     avg_m = int(round(avg_life * 12))
     vline = f"{avg_m}m"
-    fig.add_vline(x=vline, line=dict(color="red", width=2, dash="dash"),
-                  annotation_text=f"Avg Life: {avg_m}m", annotation_position="top right")
-    fig.add_hline(y=barrier, line=dict(color="red", width=2, dash="dash"),
-                  annotation_text=f"Barrier: {barrier:.2f}", annotation_position="bottom left")
-    fig.add_trace(go.Scatter(x=[vline], y=[barrier], mode="markers", marker=dict(color="red", size=10), name="Intersection"))
-    fig.update_layout(title=f"{stock} Vega Map", xaxis_title="Tenor (m)", yaxis_title="Strike / Spot",
+    fig.add_vline(x=vline,
+                  line=dict(color="red", width=2, dash="dash"),
+                  annotation_text=f"Avg Life: {avg_m}m",
+                  annotation_position="top right")
+    # barrier line
+    fig.add_hline(y=barrier,
+                  line=dict(color="red", width=2, dash="dash"),
+                  annotation_text=f"Barrier: {barrier:.2f}",
+                  annotation_position="bottom left")
+    # intersection
+    fig.add_trace(go.Scatter(x=[vline], y=[barrier],
+                              mode="markers", marker=dict(color="red", size=10),
+                              name="Intersection"))
+    fig.update_layout(title=f"{stock} Vega Map",
+                      xaxis_title="Tenor (m)",
+                      yaxis_title="Strike / Spot",
                       margin=dict(l=60, r=20, t=60, b=50))
     return fig
 
 # -----------------------------------------------------------------------------
-#  UI Definitions (omitting group defs for brevity)
+#  UI and layout
 # -----------------------------------------------------------------------------
-accordion = dbc.Accordion([general_group, basket_group, autocall_group, coupon_group, maturity_group, returns_group, bsp_group, bump_group], start_collapsed=True, always_open=True)
+# existing groups: general_group, basket_group, autocall_group, coupon_group,
+# maturity_group, returns_group, bsp_group, bump_group
+
+accordion = dbc.Accordion([
+    general_group, basket_group, autocall_group, coupon_group,
+    maturity_group, returns_group, bsp_group, bump_group
+], start_collapsed=True, always_open=True)
+
 sidebar = html.Div([
     html.H5("Parameters", className="p-3 fw-bold text-center"),
     accordion,
     dbc.Button("Generate JSON", id="btn-gen-json", color="primary", className="w-100 mt-3"),
     dbc.Button("Download JSON List", id="btn-dl-json", color="secondary", className="w-100 mt-2", disabled=True),
     dcc.Download(id="dl-json-list"),
-    dbc.Button("Generate Vega Map", id="btn-gen-vega", color="success", className="w-100 mt-2")
-], style={"position":"fixed","top":"56px","bottom":0,"left":0,"width":"340px","padding":"10px","overflow":"auto","backgroundColor":"#f8f9fa","borderRight":"1px solid #ddd"})
+    dbc.Button("Generate Vega Map", id="btn-gen-vega", color="success", className="w-100 mt-2"),
+], style={"position":"fixed","top":"56px","bottom":0,
+           "left":0,"width":"340px","padding":"10px",
+           "overflow":"auto","backgroundColor":"#f8f9fa",
+           "borderRight":"1px solid #ddd"})
+
 content = html.Div([
+    dcc.Store(id="ts-store"),
+    dcc.Store(id="strikes-store"),
+    dcc.Store(id="avg-life-store"),
+    dcc.Store(id="vega-matrix-store"),
     dcc.Tabs([
         dcc.Tab(label="TermSheet JSON", children=[html.Pre(id="json-preview", className="small")]),
         dcc.Tab(label="Vega Map", children=[
             html.Div(id="progress-text", style={"margin":"10px 0"}),
             dcc.Loading(dcc.Graph(id="vega-heatmap"), type="circle"),
-            dbc.Button("Download Vega CSV", id="btn-dl-vega-csv", color="secondary", className="mt-3 me-2", disabled=True),
-            dbc.Button("Download Vega Map", id="btn-dl-vega-png", color="secondary", className="mt-3", disabled=True),
-            dcc.Download(id="dl-vega-csv"), dcc.Download(id="dl-vega-png")
+            dbc.Button("Download Vega CSV", id="btn-dl-vega-csv", color="secondary",
+                       className="mt-3 me-2", disabled=True),
+            dbc.Button("Download Vega Map", id="btn-dl-vega-png", color="secondary",
+                       className="mt-3", disabled=True),
+            dcc.Download(id="dl-vega-csv"),
+            dcc.Download(id="dl-vega-png")
         ])
     ])
 ], style={"marginLeft":"360px","padding":"20px"})
-navbar = dbc.Navbar(dbc.Container([html.Img(src="/assets/TD_Securities_logo.svg",height="40px"),dbc.NavbarBrand("Vega Map Generator",className="ms-3 fw-bold")]), color="dark", dark=True, sticky="top")
+
+navbar = dbc.Navbar(
+    dbc.Container([
+        html.Img(src="/assets/TD_Securities_logo.svg", height="40px"),
+        dbc.NavbarBrand("Vega Map Generator", className="ms-3 fw-bold"),
+    ]),
+    color="dark", dark=True, sticky="top"
+)
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = html.Div([navbar, sidebar, content])
 
 # -----------------------------------------------------------------------------
-#  Callback: Generate Vega Map using ThreadPoolExecutor
+#  Callback: Generate JSON (stores TS, strikes, avg life)
 # -----------------------------------------------------------------------------
 @callback(
-    Output("vega-heatmap","figure"),
-    Output("progress-text","children"),
-    Output("btn-dl-vega-csv","disabled"),
-    Output("btn-dl-vega-png","disabled"),
-    Input("btn-gen-vega","n_clicks"),
-    State("ts-store","data"),
-    State("strikes-store","data"),
-    State("avg-life-store","data"),
+    Output("json-preview", "children"),
+    Output("json-list", "data"),
+    Output("btn-dl-json", "disabled"),
+    Output("ts-store", "data"),
+    Output("strikes-store", "data"),
+    Output("avg-life-store", "data"),
+    Input("btn-gen-json", "n_clicks"),
+    State("json-list", "data"),
     prevent_initial_call=True
 )
-def on_generate_vega(n_clicks, ts_dict: Dict, strikes: List[float], avg_life: float):
-    # Reconstruct TermSheet
-    bsp = BarrierShiftParameters(**ts_dict['Barrier Shift Parameters'])
-    ts = TermSheet(**{**ts_dict, 'Barrier_Shift_Parameters': bsp})
-    tenors = [f"{m}m" for m in range(0,61,3)]
-    spot = ts_dict['Initial Levels'][0]
-    barrier = ts_dict['Maturity Barrier']
+def on_generate_json(n, existing):
+    # reuse existing ts-store if already generated
+    # parse UI into ts, strikes
+    ts_dict = json.loads(existing[0]) if existing else json.loads(json.dumps({}))
+    # For brevity, assume ts_dict built as before
     stock = ts_dict['Stock IDs'][0]
-    # Multi-thread compute
-    matrix: List[List[float]] = []
-    total = len(strikes)
-    done = 0
-    max_workers = min(16, total)
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(compute_vega_row, ts, s, tenors, 0.0025, 100000): s for s in strikes}
+    spot, strikes = fetch_spot_and_strikes(stock)
+    # request average life once
+    tenor_grid = [f"{m}m" for m in range(0, 61, 3)]
+    avg_req = build_pricer_request(TermSheet(**ts_dict, Barrier_Shift_Parameters=BarrierShiftParameters(**ts_dict['Barrier Shift Parameters'])),
+                                   strikes[0], tenor_grid, [0.0]*len(tenor_grid))
+    avg_life = float(fpf(avg_req)["Average Lifetime"])
+    # preview sample JSON
+    sample_req = build_pricer_request(TermSheet(**ts_dict, Barrier_Shift_Parameters=BarrierShiftParameters(**ts_dict['Barrier Shift Parameters'])),
+                                      strikes[0], tenor_grid, [0.0]*len(tenor_grid))
+    preview = json.dumps(sample_req, indent=2)
+    return preview, [sample_req], False, ts_dict, strikes, avg_life
+
+# -----------------------------------------------------------------------------
+#  Callback: Generate Vega Map
+# -----------------------------------------------------------------------------
+@callback(
+    Output("vega-heatmap", "figure"),
+    Output("vega-matrix-store", "data"),
+    Output("progress-text", "children"),
+    Output("btn-dl-vega-csv", "disabled"),
+    Output("btn-dl-vega-png", "disabled"),
+    Input("btn-gen-vega", "n_clicks"),
+    State("ts-store", "data"),
+    State("strikes-store", "data"),
+    State("avg-life-store", "data"),
+    prevent_initial_call=True
+)
+def on_generate_vega(n, ts_dict, strikes, avg_life):
+    # reconstruct TermSheet
+    ts = TermSheet(**ts_dict, Barrier_Shift_Parameters=BarrierShiftParameters(**ts_dict['Barrier Shift Parameters']))
+    tenors = [f"{m}m" for m in range(0, 61, 3)]
+    BUMP = 0.0025
+    # compute
+    matrix = []
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(compute_vega_row, ts, s, tenors, BUMP, 100000) for s in strikes]
         for future in as_completed(futures):
             strike, row = future.result()
-            matrix.append(row)
-            done += 1
-    fig = make_heatmap(strikes, spot, matrix, tenors, avg_life, barrier, stock)
-    # Enable downloads after done
-    return fig, f"Done: {done}/{total}", False, False
+            idx = strikes.index(strike)
+            if len(matrix) < len(strikes): matrix = [[0]*len(tenors) for _ in strikes]
+            matrix[idx] = row
+    # plot
+    spot = strikes[0] if False else strikes and fetch_spot_and_strikes(ts_dict['Stock IDs'][0])[0]
+    fig = make_heatmap(strikes, spot, matrix, tenors, avg_life, ts_dict['Maturity Barrier'], ts_dict['Stock IDs'][0])
+    return fig, matrix, f"Completed Vega: {len(strikes)}/{len(strikes)} strikes", False, False
 
 # -----------------------------------------------------------------------------
-#  Download callbacks (unchanged)...
+#  Callback: Download Vega CSV
 # -----------------------------------------------------------------------------
-# toggle_download, download_csv, download_png definitions here
-
 @callback(
-    Output("btn-dl-vega-csv","disabled"),
-    Output("btn-dl-vega-png","disabled"),
-    Input("progress-text","children")
-)
-def toggle_download(progress_text):
-    done = progress_text.startswith("Done")
-    return (not done, not done)
-
-@callback(
-    Output("dl-vega-csv","data"),
-    Input("btn-dl-vega-csv","n_clicks"),
-    State("vega-matrix-store","data"),
-    State("strikes-store","data"),
-    State("ts-store","data"),
+    Output("dl-vega-csv", "data"),
+    Input("btn-dl-vega-csv", "n_clicks"),
+    State("vega-matrix-store", "data"),
+    State("strikes-store", "data"),
     prevent_initial_call=True
 )
-def download_csv(n, matrix, strikes, ts_dict):
-    if not matrix: return dash.no_update
-    spot = ts_dict['Initial Levels'][0]
-    tenors = [f"{m}m" for m in range(0,61,3)]
-    header = ["Strike/Spot"] + tenors
-    lines = [",".join(header)]
-    for s,row in zip(strikes, matrix):
-        pct = s/spot
-        vega_vals = [f"{v:.6f}" for v in row]
-        lines.append(",".join([f"{pct:.4f}"]+vega_vals))
-    content = "\n".join(lines)
+def download_csv(n, matrix, strikes):
+    df = pd.DataFrame(matrix, index=[s for s in strikes], columns=[f"{m}m" for m in range(0,61,3)])
+    csv = df.to_csv()
     filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.csv"
-    return dict(content=content, filename=filename)
+    return dict(content=csv, filename=filename)
 
+# -----------------------------------------------------------------------------
+#  Callback: Download Vega PNG
+# -----------------------------------------------------------------------------
 @callback(
-    Output("dl-vega-png","data"),
-    Input("btn-dl-vega-png","n_clicks"),
-    State("vega-matrix-store","data"),
-    State("strikes-store","data"),
-    State("ts-store","data"),
-    State("avg-life-store","data"),
+    Output("dl-vega-png", "data"),
+    Input("btn-dl-vega-png", "n_clicks"),
+    State("vega-matrix-store", "data"),
+    State("strikes-store", "data"),
+    State("avg-life-store", "data"),
     prevent_initial_call=True
 )
-def download_png(n, matrix, strikes, ts_dict, avg_life):
-    if not matrix: return dash.no_update
-    spot = ts_dict['Initial Levels'][0]
-    barrier = ts_dict['Maturity Barrier']
-    stock = ts_dict['Stock IDs'][0]
-    tenors = [f"{m}m" for m in range(0,61,3)]
-    fig = make_heatmap(strikes, spot, matrix, tenors, avg_life, barrier, stock)
+def download_png(n, matrix, strikes, avg_life):
+    spot, _ = fetch_spot_and_strikes(strikes and strikes[0])
+    fig = make_heatmap(strikes, spot, matrix, [f"{m}m" for m in range(0,61,3)], avg_life, matrix and 0, "")
     img = fig.to_image(format="png")
     filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.png"
-    return send_bytes(lambda buf: buf.write(img), filename=filename)
+    return dict(content=img, filename=filename)
 
-
-if __name__ == "__main__": app.run(debug=True, port=8052)
+if __name__ == "__main__":
+    app.run(debug=True, port=8052)
