@@ -134,4 +134,56 @@ def on_generate_vega(n_clicks, ts_dict: Dict, strikes: List[float], avg_life: fl
 # -----------------------------------------------------------------------------
 # toggle_download, download_csv, download_png definitions here
 
+@callback(
+    Output("btn-dl-vega-csv","disabled"),
+    Output("btn-dl-vega-png","disabled"),
+    Input("progress-text","children")
+)
+def toggle_download(progress_text):
+    done = progress_text.startswith("Done")
+    return (not done, not done)
+
+@callback(
+    Output("dl-vega-csv","data"),
+    Input("btn-dl-vega-csv","n_clicks"),
+    State("vega-matrix-store","data"),
+    State("strikes-store","data"),
+    State("ts-store","data"),
+    prevent_initial_call=True
+)
+def download_csv(n, matrix, strikes, ts_dict):
+    if not matrix: return dash.no_update
+    spot = ts_dict['Initial Levels'][0]
+    tenors = [f"{m}m" for m in range(0,61,3)]
+    header = ["Strike/Spot"] + tenors
+    lines = [",".join(header)]
+    for s,row in zip(strikes, matrix):
+        pct = s/spot
+        vega_vals = [f"{v:.6f}" for v in row]
+        lines.append(",".join([f"{pct:.4f}"]+vega_vals))
+    content = "\n".join(lines)
+    filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.csv"
+    return dict(content=content, filename=filename)
+
+@callback(
+    Output("dl-vega-png","data"),
+    Input("btn-dl-vega-png","n_clicks"),
+    State("vega-matrix-store","data"),
+    State("strikes-store","data"),
+    State("ts-store","data"),
+    State("avg-life-store","data"),
+    prevent_initial_call=True
+)
+def download_png(n, matrix, strikes, ts_dict, avg_life):
+    if not matrix: return dash.no_update
+    spot = ts_dict['Initial Levels'][0]
+    barrier = ts_dict['Maturity Barrier']
+    stock = ts_dict['Stock IDs'][0]
+    tenors = [f"{m}m" for m in range(0,61,3)]
+    fig = make_heatmap(strikes, spot, matrix, tenors, avg_life, barrier, stock)
+    img = fig.to_image(format="png")
+    filename = f"vega_map_{datetime.utcnow():%Y%m%dT%H%M%S}.png"
+    return send_bytes(lambda buf: buf.write(img), filename=filename)
+
+
 if __name__ == "__main__": app.run(debug=True, port=8052)
