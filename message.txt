@@ -1,3 +1,8 @@
-Hi Jas, welcome back! Hope the past couple weeks went well.
+Hey Denny, would you have 15–20 min sometime this week for a quick coffee chat? I’m always curious what Sales is really like day-to-day and how you guys actually work with the exotic desk. Totally flexible on timing!
 
-I’d love to give you a quick update on what I’ve been working on with Keonhi. Would you have 10–15 minutes later today for a quick catch-up? Happy to work around your schedule.
+I have a quick question about Vega bumping for multi-asset structured notes.
+
+For single-asset products, we bump volatility tenor by tenor on a strike-tenor grid and get a simple 2D Vega[strike, tenor] map.
+
+For multi-asset products, do we usually just bump one asset at a time (keeping the others fixed),
+or do we also need to consider simultaneous bumps for all assets?
