@@ -3,7 +3,7 @@ navbar = dbc.Navbar(
         dbc.NavbarBrand(
             [
                 html.Img(
-                    src="*/assets/TD_Securities_logo.svg",
+                    src="/assets/TD_Securities_logo.svg",
                     height="40px",
                     className="me-2"    
                 ),
