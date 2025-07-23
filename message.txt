@@ -1,10 +1,7 @@
-Hi Andrew,
+NY office!
 
-I’m Annie, the quant intern at the Exotic Trading desk in NY—we met two weeks ago when you were in the NY office!
+I’m currently working on a Vega map generator for structured notes. It bumps volatilities across tenors/strikes, sends the note’s termsheet to FPFServer for each bump, and calculates the M2M sensitivity. The back end is already implemented, but I’m running into an issue on the input side. Ideally, users want to generate Vega maps simply by providing the quote ID and iteration number for a note.
 
-I’m currently working on a Vega map generator for structured notes. The back end is already implemented, but I’m running into an issue on the input side. Ideally, users want to generate Vega maps simply by providing the quote ID and iteration number for a note.
-
-This would be the most ideal workflow for users, so I wanted to check with you—is there a way to fetch the full termsheet from FPFServer using just the quote ID and iteration number? Or is there an API that supports this?
+I wanted to check with you—is there a way to fetch the full termsheet from FPFServer using just the quote ID and iteration number? Or is there an API that supports this?
 
 Thanks a lot!
-
