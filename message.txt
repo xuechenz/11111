@@ -1,1 +1,10 @@
-Hi Chris, I’m Annie, the quant intern currently rotating on the exotic trading desk. I’ve been meaning to properly introduce myself, as we haven’t had the chance to speak one-on-one. I’m from a pure quant background, but I believe to really add value as a quant it’s important to understand the needs of Sales and Trading and see how the whole desk works together. I’d really value the opportunity to hear your views on the current client demand for structured notes and how Sales presents these products to clients. Would you happen to have 15–20 minutes sometime this week for a quick coffee chat? I’m happy to work around your schedule.
+Hi Andrew,
+
+I’m Annie, the quant intern at the Exotic Trading desk in NY—we met two weeks ago when you were in the NY office!
+
+I’m currently working on a Vega map generator for structured notes. The back end is already implemented, but I’m running into an issue on the input side. Ideally, users want to generate Vega maps simply by providing the quote ID and iteration number for a note.
+
+This would be the most ideal workflow for users, so I wanted to check with you—is there a way to fetch the full termsheet from FPFServer using just the quote ID and iteration number? Or is there an API that supports this?
+
+Thanks a lot!
+
