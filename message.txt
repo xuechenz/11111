@@ -1,1 +1,20 @@
-Thank you so much for taking the time to chat, Brad—really enjoyed our conversation! I’ll drop you a message on Wednesday to check if shadowing would work then. Appreciate you being open to it!
+Dear [Mentor's Name],
+
+I hope you're doing well! I wanted to give you a quick update on my recent progress with the GED Manager.
+
+I've modified part of the UI components and successfully reintegrated my summary table back into the main GED Manager interface. The updated version is currently running at:
+https://dashboard.td.com/dash/GEDManager-New/
+
+Right now, I'm focusing on debugging the application. So far, I’ve noticed several issues:
+
+Some tickers appear in the dropdown menu but do not actually exist in the database, resulting in missing data.
+
+Certain features are not functioning properly on weekends.
+
+A few code sections contain errors that are preventing correct execution.
+
+I plan to fix these issues over the next few days. Please let me know if there’s anything specific you’d like me to prioritize or if you have any feedback.
+
+Best regards,
+Annie
+s
