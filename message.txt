@@ -14,7 +14,7 @@ Certain features are not functioning properly on weekends.
 A few code sections contain errors that are preventing correct execution.
 
 I plan to fix these issues over the next few days. Please let me know if there’s anything specific you’d like me to prioritize or if you have any feedback.
+Please feel free to test out the updated GED Manager at your convenience and let me know if everything works on your end.
 
 Best regards,
 Annie
-s
