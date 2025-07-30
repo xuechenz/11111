@@ -91,3 +91,68 @@ pd.DataFrame(
 ).to_csv(out_dir / "vega_map.csv")
 
 print(f"PNG & CSV saved to → {out_dir.resolve()}")
+
+
+def build_pricer_request(
+    term_sheet: TermSheet,
+    strikes: float,
+    tenors: List[str],
+    tenor_bump_sizes: List[float],
+    bump_size_abs: float = 0.0025,
+    stock_ids: List[str] = None,
+    max_paths: int = 100000
+) -> Dict[str, Any]:
+    if stock_ids is None:
+        stock_ids = term_sheet.Stock_IDs
+
+    request: Dict[str, Any] = {
+        "action": "price",
+        "pricer": "Autocallable Note",
+        "greeks": {
+            "M2M Value": True,
+            "Vega": True,
+            "Gamma": True,
+            "Average Lifetime": True
+        },
+        "numeric_parameters": {
+            "Calibrate Dupire on Full Strike Range": True,
+            "Computation Type": "Monte Carlo",
+            "Implied Volatility Average Fitting Error Tolerance": [1e-7, 2e-5],
+            "Implied Volatility Fitting Error Tenor": [1, 2],
+            "Implied Volatility Surface Fitter": "TD Fitter",
+            "Maximum Euler Timestep": 1,
+            "Maximum Euler Timestep Tenors": [0, 0.5, 1, 2],
+            "Maximum Euler Timestep Values": [1, 5, 10, 10],
+            "Number of Paths": max_paths,
+            "Random Sampler Type": "NormalCNDInvSampler",
+            "Random Uniform Generator": "RandomSobol",
+            "Use Unadjusted Barrier For Memory Event": True
+        },
+        "assumptions": {
+            "Dividend Model": "Discrete Proportional",
+            "Volatility Model": "Local Volatility Surface",
+            "Volatility Sub Type": "Effective Strike"
+        },
+        "termsheet": term_sheet.to_dict(),
+        "bumps": [
+            {
+                "Type": "Volatility Bump",
+                "Bump Method": "Absolute",
+                "Stock IDs": stock_ids,
+                "Strike": strikes,
+                "Tenor Bump Sizes": tenor_bump_sizes,
+                "Tenors": tenors
+            }
+        ],
+        "curve_mapping": {
+            "Mongo Curve Mapping": {
+                "ID": "cof_discounting_USA"
+            }
+        },
+        "split_mc": False,
+        "with_slave": True,
+        "priority": -5,
+        "storing_pricing_data": False
+    }
+
+    return request
