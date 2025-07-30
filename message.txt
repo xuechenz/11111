@@ -1,7 +1,1 @@
-Hi Zhongguo,
-I’m Annie, a quant intern currently in my first rotation with QMA—I think we briefly met at the team lunch last month. I’ve been meaning to learn more about our Core Library, and I’ve heard you’re one of the most experienced developers on the team.
-
-I’d really appreciate the chance to hear your perspective and better understand how the Core systems support everything we build on top of. Would you be open to a quick 15–20 minute chat sometime next week? I’m totally flexible on timing.
-
-Thanks so much!
-
+I was wondering—would it be okay if I invited a few people from the firm to join my final presentation? I’ve been sharing bits of my project during coffee chats, and a few folks expressed genuine interest in attending. Thought I’d check with you first to make sure that’s alright.
