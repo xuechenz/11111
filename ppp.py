@@ -1,136 +1,81 @@
-# --- 网格边界 & 中心 -----------------------------------------
-strike_edges = [round(0.5 + 0.1*i, 2) for i in range(11)]          # 0.5 → 1.5
-strike_centers = [(a+b)/2 for a,b in zip(strike_edges[:-1], strike_edges[1:])]
+from datetime import datetime, UTC
 
-tenor_edges_m  = list(range(0, 60+3, 3))                           # 0,3,…,60
-tenor_centers_m= [(a+b)//2 for a,b in zip(tenor_edges_m[:-1], tenor_edges_m[1:])]
+store_data = {
+    "strike_centers": strike_centers,          
+    "tenor_centers_m": tenor_centers_m,        
+    "stock_ids": stock_ids,
+    "matrices": matrices,                      
+    "avg_life": avg_life,
+    "mat_barrier": _parse_float(vals["mat_barrier"]),
+    "timestamp": datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"),
+}
 
-tenors = [f"{m}m" for m in tenor_centers_m]                        # → ['1m','4m',…,'58m']
-# strike_centers ⽤作 ks
+@callback(
+    Output("dl-vega-csv", "data"),
+    Input("btn-dl-vega-csv", "n_clicks"),
+    State("vega-matrix-store", "data"),
+    prevent_initial_call=True,
+)
+def download_vega_csv(n_clicks, store_data):
+    if not n_clicks or not store_data:
+        raise dash.no_update
 
-def compute_vega_cell(
-        ts: TermSheet,
-        k_low: float, k_high: float,
-        t_low_m: int, t_high_m: int,
-        bump: float,
-        stock_id: list[str],
-        max_paths: int,
-        pv0: float         
-) -> float:
-    req = build_pricer_request(
-        term_sheet       = ts,
-        rel_low_strk     = [k_low],
-        rel_high_strk    = [k_high],
-        short_term       = [f"{t_low_m}m"],
-        long_term        = [f"{t_high_m}m"],
-        tenor_bump_sizes = [bump],
-        stock_ids        = stock_id,
-        max_paths        = max_paths,
-    )
-    pv_bump = float(fpf(req)["M2M Value"])
-    return (pv_bump - pv0) / bump
+    k_centers   = store_data["strike_centers"]       
+    t_centers_m = store_data["tenor_centers_m"]      
+    cols        = [f"{m}m" for m in t_centers_m]
 
-rows, cols = len(strike_centers), len(tenor_centers_m)
-matrix_i = [[0.0]*cols for _ in range(rows)]
+    stock_ids   = store_data["stock_ids"]
+    matrices    = store_data["matrices"]
+    ts_tag      = store_data["timestamp"]
 
-#调用
-with ThreadPoolExecutor(max_workers=20) as exe:
-    futs = {}
-    for i, (k_lo,k_hi) in enumerate(zip(strike_edges[:-1], strike_edges[1:])):
-        for j, (t_lo,t_hi) in enumerate(zip(tenor_edges_m[:-1], tenor_edges_m[1:])):
-            fut = exe.submit(
-                compute_vega_cell,
-                ts, k_lo, k_hi, t_lo, t_hi,
-                bump_size, [sid], max_paths, pv0
-            )
-            futs[fut] = (i, j)
+    if len(stock_ids) == 1:
+        df  = pd.DataFrame(matrices[0], index=k_centers, columns=cols)
+        fname = f"vega_map_{stock_ids[0]}_{ts_tag}.csv"
+        return dcc.send_data_frame(df.to_csv, fname)
 
-    for fut in as_completed(futs):
-        i, j = futs[fut]
-        matrix_i[i][j] = fut.result()
+    import zipfile, io
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for sid, mtx in zip(stock_ids, matrices):
+            df = pd.DataFrame(mtx, index=k_centers, columns=cols)
+            csv_bytes = df.to_csv().encode()
+            zf.writestr(f"vega_map_{sid}.csv", csv_bytes)
+    buf.seek(0)
+    return dict(content=buf.read(), filename=f"vega_maps_{len(stock_ids)}_{ts_tag}.zip")
 
+@callback(
+    Output("dl-vega-png", "data"),
+    Input("btn-dl-vega-png", "n_clicks"),
+    State("vega-matrix-store", "data"),
+    prevent_initial_call=True,
+)
+def download_vega_png(n_clicks, store_data):
+    if not n_clicks or not store_data:
+        raise dash.no_update
 
-def make_heatmap(strike_centers, tenor_centers_m,
-                 matrix, avg_life, barrier_rel, stock):
+    k_centers   = store_data["strike_centers"]
+    t_centers_m = store_data["tenor_centers_m"]
+    stock_ids   = store_data["stock_ids"]
+    matrices    = store_data["matrices"]
+    avg_life    = store_data["avg_life"]
+    mat_barrier = store_data["mat_barrier"]
+    ts_tag      = store_data["timestamp"]
 
-    x_vals = [m/12 for m in tenor_centers_m]      
-    y_vals = strike_centers                      
+    if len(stock_ids) == 1:
+        sid = stock_ids[0]
+        fig = make_heatmap(k_centers, t_centers_m, matrices[0],
+                           avg_life, mat_barrier, sid)
+        png_bytes = fig.to_image(format="png", width=800, height=600, scale=2)
+        fname = f"vega_map_{sid}_{ts_tag}.png"
+        return dict(content=png_bytes, filename=fname, type="image/png")
 
-    vmax = max(abs(v) for row in matrix for v in row)
-
-    fig = go.Figure(go.Heatmap(
-        z=matrix,
-        x=x_vals,
-        y=y_vals,
-        zmin=-vmax, zmax=vmax, zmid=0,
-        colorscale=[[0,'red'], [0.5,'white'], [1,'green']],
-        hovertemplate=("Strike: %{y:.2f}<br>"
-                       "Tenor: %{x:.2f}y<br>"
-                       "Vega: %{z:.4f}<extra></extra>")
-    ))
-
-    avg_m = int(round(avg_life*12))
-    fig.add_vline(x=avg_m/12, line=dict(color="red", dash="dash"),
-                  annotation_text=f"Avg Life: {avg_m}m",
-                  annotation_position="top right")
-    fig.add_hline(y=barrier_rel, line=dict(color="red", dash="dash"),
-                  annotation_text=f"Barrier: {barrier_rel:.2f}",
-                  annotation_position="bottom left")
-    fig.add_trace(go.Scatter(x=[avg_m/12], y=[barrier_rel],
-                             mode="markers",
-                             marker=dict(color="red", size=8),
-                             name="Intersection"))
-
-    fig.update_xaxes(title="Tenor (years)")
-    fig.update_yaxes(title="Relative Strike (×Spot)")
-    fig.update_layout(title=f"{stock} Vega Map")
-    return fig
-
-#外部调用
-fig_i = make_heatmap(strike_centers, tenor_centers_m,
-                     matrix_i, avg_life,
-                     _parse_float(vals["mat_barrier"]), sid)
-
-matrices   = []
-figs       = []
-progress_bits = []
-
-for sid in stock_ids:
-    # ===== baseline PV=====
-    req_base = build_pricer_request_no_bump(ts, [sid], max_paths)
-    pv0 = float(fpf(req_base)["M2M Value"])
-    print(f"{sid}  baseline PV = {pv0:.4f}")
-
-    rows, cols = len(strike_centers), len(tenor_centers_m)
-    matrix_i   = [[0.0]*cols for _ in range(rows)]
-
-    with ThreadPoolExecutor(max_workers=20) as exe:
-        futs = {}
-        for i, (k_lo, k_hi) in enumerate(zip(strike_edges[:-1], strike_edges[1:])):
-            for j, (t_lo, t_hi) in enumerate(zip(tenor_edges_m[:-1], tenor_edges_m[1:])):
-                fut = exe.submit(
-                    compute_vega_cell,
-                    ts, k_lo, k_hi,
-                    t_lo, t_hi,
-                    bump_size, [sid],
-                    max_paths,
-                    pv0              
-                )
-                futs[fut] = (i, j)
-
-        for fut in as_completed(futs):
-            i, j = futs[fut]
-            matrix_i[i][j] = fut.result()
-
-    matrices.append(matrix_i)
-
-    fig_i = make_heatmap(
-        strike_centers,
-        tenor_centers_m,
-        matrix_i,
-        avg_life,
-        _parse_float(vals["mat_barrier"]),
-        sid
-    )
-    figs.append(fig_i)
-    progress_bits.append(f"{sid}: {rows*cols} cells")
+    import zipfile, io
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for sid, mtx in zip(stock_ids, matrices):
+            fig = make_heatmap(k_centers, t_centers_m, mtx,
+                               avg_life, mat_barrier, sid)
+            png_bytes = fig.to_image(format="png", width=800, height=600, scale=2)
+            zf.writestr(f"vega_map_{sid}.png", png_bytes)
+    buf.seek(0)
+    return dict(content=buf.read(), filename=f"vega_maps_{len(stock_ids)}_{ts_tag}.zip")
