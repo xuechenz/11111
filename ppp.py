@@ -1,113 +1,93 @@
-# ========= 1. Volatility =========
-@app.callback(Output('volatility', 'children'),
-              Input('tabs-example', 'active_tab'))
-def update_tabs1(active_tab):
-    if active_tab == 'volatility':
-        return dbc.Tabs(
-            id='subtabs1',
-            active_tab='subtab1-1',
-            pills=True, justify=True,
-            children=[
-                dbc.Tab(label='Data',          tab_id='subtab1-1'),
-                dbc.Tab(label='Visualization', tab_id='subtab1-2'),
-                dbc.Tab(label='Analysis',      tab_id='subtab1-3'),
-                dbc.Tab(label='Benchmark',     tab_id='subtab1-4'),
-                dbc.Tab(label='Fitter',        tab_id='subtab1-5'),
-                dbc.Tab(label='Spread',        tab_id='subtab1-6'),
-            ]
-        )
+import time, numpy as np, pandas as pd
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+BUMP_SIZE   = 0.0025
+MAX_PATHS   = 100_000
+THREADS     = 16
+STOCK_ID    = "AAPL.US"               
 
-# ========= 2. Dividend =========
-@app.callback(Output('dividend', 'children'),
-              Input('tabs-example', 'active_tab'))
-def update_tabs2(active_tab):
-    if active_tab == 'dividend':
-        return dbc.Tabs(
-            id='subtabs2',
-            active_tab='subtab2-1',
-            pills=True, justify=True,
-            children=[
-                dbc.Tab(label='Data',          tab_id='subtab2-1'),
-                dbc.Tab(label='Visualization', tab_id='subtab2-2'),
-                dbc.Tab(label='Analysis',      tab_id='subtab2-3'),
-                dbc.Tab(label='Benchmark',     tab_id='subtab2-4'),
-                dbc.Tab(label='Fitter',        tab_id='subtab2-5'),
-                dbc.Tab(label='Spread',        tab_id='subtab2-6'),
-            ]
-        )
+strike_edges   = np.round(np.arange(0.5, 1.5 + 0.1, 0.1), 2)      
+tenor_edges_m  = np.arange(0, 60 + 3, 3)                          
+strike_centers = (strike_edges[:-1] + strike_edges[1:]) / 2     
+tenor_centers  = (tenor_edges_m[:-1] + tenor_edges_m[1:]) // 2     
 
-# ========= 3. Repo =========
-@app.callback(Output('repo', 'children'),
-              Input('tabs-example', 'active_tab'))
-def update_tabs3(active_tab):
-    if active_tab == 'repo':
-        return dbc.Tabs(
-            id='subtabs3',
-            active_tab='subtab3-1',
-            pills=True, justify=True,
-            children=[
-                dbc.Tab(label='Data',          tab_id='subtab3-1'),
-                dbc.Tab(label='Visualization', tab_id='subtab3-2'),
-                dbc.Tab(label='Analysis',      tab_id='subtab3-3'),
-                dbc.Tab(label='Benchmark',     tab_id='subtab3-4'),
-                dbc.Tab(label='Fitter',        tab_id='subtab3-5'),
-                dbc.Tab(label='Spread',        tab_id='subtab3-6'),
-            ]
-        )
+n_strike, n_tenor = len(strike_centers), len(tenor_centers)
+vega_matrix = np.zeros((n_strike, n_tenor))
 
-# ========= 4. Rate =========
-@app.callback(Output('rate', 'children'),
-              Input('tabs-example', 'active_tab'))
-def update_tabs4(active_tab):
-    if active_tab == 'rate':
-        return dbc.Tabs(
-            id='subtabs4',
-            active_tab='subtab4-1',
-            pills=True, justify=True,
-            children=[
-                dbc.Tab(label='Data',          tab_id='subtab4-1'),
-                dbc.Tab(label='Visualization', tab_id='subtab4-2'),
-                dbc.Tab(label='Analysis',      tab_id='subtab4-3'),
-                dbc.Tab(label='Benchmark',     tab_id='subtab4-4'),
-                dbc.Tab(label='Fitter',        tab_id='subtab4-5'),
-                dbc.Tab(label='Spread',        tab_id='subtab4-6'),
-            ]
-        )
+# ---------------- baseline PV (一次) ----------------
+req_base = build_pricer_request_no_bump(ts, [STOCK_ID], MAX_PATHS)
+pv0 = float(fpf(req_base)["M2M Value"])
+print(f"Baseline PV ({STOCK_ID}) = {pv0:.4f}")
 
-# ========= 5. Correlation =========
-@app.callback(Output('correlation', 'children'),
-              Input('tabs-example', 'active_tab'))
-def update_tabs5(active_tab):
-    if active_tab == 'correlation':
-        return dbc.Tabs(
-            id='subtabs5',
-            active_tab='subtab5-1',
-            pills=True, justify=True,
-            children=[
-                dbc.Tab(label='Data',          tab_id='subtab5-1'),
-                dbc.Tab(label='Visualization', tab_id='subtab5-2'),
-                dbc.Tab(label='Analysis',      tab_id='subtab5-3'),
-                dbc.Tab(label='Benchmark',     tab_id='subtab5-4'),
-                dbc.Tab(label='Fitter',        tab_id='subtab5-5'),
-                dbc.Tab(label='Spread',        tab_id='subtab5-6'),
-            ]
-        )
+# ---------------- 计算单元格 vega ----------------
+def compute_vega_cell(i: int, j: int) -> tuple[int, int, float]:
+    k_low, k_high = strike_edges[i], strike_edges[i + 1]
+    t_low, t_high = tenor_edges_m[j], tenor_edges_m[j + 1]
 
-# ========= 6. Spot =========
-@app.callback(Output('spot', 'children'),
-              Input('tabs-example', 'active_tab'))
-def update_tabs6(active_tab):
-    if active_tab == 'spot':
-        return dbc.Tabs(
-            id='subtabs6',
-            active_tab='subtab6-1',
-            pills=True, justify=True,
-            children=[
-                dbc.Tab(label='Data',          tab_id='subtab6-1'),
-                dbc.Tab(label='Visualization', tab_id='subtab6-2'),
-                dbc.Tab(label='Analysis',      tab_id='subtab6-3'),
-                dbc.Tab(label='Benchmark',     tab_id='subtab6-4'),
-                dbc.Tab(label='Fitter',        tab_id='subtab6-5'),
-                dbc.Tab(label='Spread',        tab_id='subtab6-6'),
-            ]
-        )
+    req = build_pricer_request(
+        term_sheet      = ts,
+        rel_low_strk    = [k_low],
+        rel_high_strk   = [k_high],
+        short_term      = [f"{t_low}m"],
+        long_term       = [f"{t_high}m"],
+        tenor_bump_sizes= [BUMP_SIZE],
+        stock_ids       = [STOCK_ID],
+        max_paths       = MAX_PATHS,
+    )
+    pv_bump = float(fpf(req)["M2M Value"])
+    vega = (pv_bump - pv0) / BUMP_SIZE
+    return i, j, vega
+
+# ---------------- 并⾏填充矩阵 ----------------
+start = time.time()
+with ThreadPoolExecutor(max_workers=THREADS) as exe:
+    futures = {
+        exe.submit(compute_vega_cell, i, j): (i, j)
+        for i in range(n_strike)
+        for j in range(n_tenor)
+    }
+    for fut in as_completed(futures):
+        i, j, vega = fut.result()
+        vega_matrix[i, j] = vega
+print(f"Vega grid done in {time.time() - start:.1f}s")
+
+# ---------------- 画热图 ----------------
+cmap = LinearSegmentedColormap.from_list(
+    "red_white_green",
+    [(0.80, 0.00, 0.00),
+     (1.00, 1.00, 1.00),
+     (0.00, 0.50, 0.00)],
+    N=256,
+)
+abs_max = np.abs(vega_matrix).max()
+norm = TwoSlopeNorm(vmin=-abs_max, vcenter=0.0, vmax=abs_max)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+mesh = ax.pcolormesh(
+    tenor_centers / 12,                
+    strike_centers,                     
+    vega_matrix,
+    cmap=cmap,
+    norm=norm,
+    shading="auto",
+)
+fig.colorbar(mesh, ax=ax, label="Vega")
+ax.set_xlabel("Tenor (years)")
+ax.set_ylabel("Strike / Spot")
+ax.set_title(f"Autocallable Note – {STOCK_ID} Vega Map")
+plt.tight_layout()
+plt.show()
+
+# ---------------- 保存 PNG & CSV ----------------
+out_dir = Path("Temp"); out_dir.mkdir(parents=True, exist_ok=True)
+fig.savefig(out_dir / "vega_map.png", dpi=300, bbox_inches="tight"); plt.close(fig)
+
+pd.DataFrame(
+    vega_matrix,
+    index=strike_centers,
+    columns=[f"{t}m" for t in tenor_centers],
+).to_csv(out_dir / "vega_map.csv")
+
+print(f"PNG & CSV saved to → {out_dir.resolve()}")
