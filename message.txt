@@ -1,1 +1,1 @@
-Yes! We have the Fokker Planck CDF model, we can use an inverse transform sampling to sample uniform u∼U(0,1) and do a search over x such that CDF(x) = u. So the model can act as a sampler.
+Oh I see — yeah, our model has too many inputs, so inverse CDF might not be practical. I didn’t know about the acceptance-rejection method, I’ll take a look and see if it could work here!
