@@ -1,1 +1,1 @@
-Would you like me to come find you at your desk at Park 125, or is there a meeting spot you prefer? I’m in 1V so just wanted to make sure!
+Yes! We have the Fokker Planck CDF model, we can use an inverse transform sampling to sample uniform u∼U(0,1) and do a search over x such that CDF(x) = u. So the model can act as a sampler.
