@@ -1,3 +1,1 @@
-I was looking at the current script, and it seems like it only pulls one price per day. Just wanted to check — when you mentioned identifying names that moved more than 10% within the day, were you referring to intraday data (like minute or hourly)?
-
-If so, do we have access to that somewhere? Happy to update the code once I know where to pull it from.
+Hi Keonhi, I have implemented a script that aim to fetch 5 years spot data and calculate the intraday difference. However, I failed to connect to the server for data, do you have any idea how to write the correct connectionString so I can run the script.
