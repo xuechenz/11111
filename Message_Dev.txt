@@ -1,6 +1,6 @@
 Hi Dev,
 
-I truly appreciate your question — it reflects exactly the kind of practical integration we’ve been thinking about.
+Thank you for the kind words and thoughtful question.
 
 You're absolutely right in highlighting the potential of a two-stage architecture for practical deployment. In fact, we found that the necessity of such a setup largely depends on how the model handles input parameters. If the model is trained to take all key market parameters (like rate and volatility) as inputs, it can generalize well enough that a second stage may not be needed.
 
@@ -8,7 +8,7 @@ But for solvers that require fixed parameters, your suggested approach is very e
 
 For larger changes, we can pretrain a model library across a grid of parameters and pick the closest one to fine-tune. This hybrid method balances accuracy and efficiency and works well for intraday recalibration.
 
-Thanks again — your question really aligns with how we’re thinking about deployment.
+I truly appreciate your question — it reflects exactly the kind of practical integration we’ve been thinking about.
 
 Best,
 Annie
