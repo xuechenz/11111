@@ -1,12 +1,29 @@
-Hi [Boss’s Name],
+Thanks for the great question — happy to clarify!
 
-Thanks again for the chance to present today — I’ve attached the slides and supporting materials below. Please let me know if there’s anything else I should send over.
+In this framework, we don’t collect training data in the traditional way. Instead, we generate it synthetically using a mesh-free sampling strategy. Specifically, we randomly sample input points from three key regions in each training iteration:
 
-I also wanted to take a moment to sincerely thank you for all your support this summer. I’ve learned so much through this rotation, and I’m incredibly grateful for the opportunity to work with you and the QMA team. From the very beginning, I felt welcomed and challenged in the best way — it’s been a truly meaningful experience.
+The interior of the domain — where we apply the PDE residual loss
 
-If I’m fortunate enough to return, I would love the chance to come back to QMA and continue growing here.
+The final time slice — to enforce the terminal payoff condition
 
-Hope we can stay in touch!
+The boundaries (e.g., Smin/Smax) — to apply boundary conditions
 
-Best,
-Annie
+This sampling changes every batch, so the model sees fresh data throughout training.
+
+What affects training data quality?
+Several factors influence performance:
+
+Sampling density in each region: under-sampling the terminal or boundary regions weakens enforcement of those conditions.
+
+Distribution of points: uniform works well in low dimensions, but higher-dimensional problems may benefit from adaptive sampling (e.g., focusing more where the payoff is highly nonlinear).
+
+Batch size and training duration: more iterations with sufficient samples help the model converge better.
+
+Sensitivity to sampling
+Yes — the model is quite sensitive to the sampling scheme. For example, during testing, we observed that increasing the proportion of terminal points improved pricing accuracy for short-tenor options. Poor sampling around edges or maturity can lead to instability or shape drift in the solution surface.
+
+So overall, the “training data” here is really a sampling design choice, and tuning it is critical to solution quality.
+
+Also — if you’re interested, Scott kindly helped host all the project materials on an internal site. Feel free to check it out, and if you have any other questions or ideas, I’d love to chat more!
+
+Thanks again!
