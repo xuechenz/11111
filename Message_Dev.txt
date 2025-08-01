@@ -1,15 +1,16 @@
 Hi Dev,
 
-Thank you for the kind words and thoughtful question.
+Thank you so much for your kind words and for raising such a thoughtful and practical question.
 
-You're absolutely right in highlighting the potential of a two-stage architecture for practical deployment. In fact, we found that the necessity of such a setup largely depends on how the model handles input parameters. If the model is trained to take all key market parameters (like rate and volatility) as inputs, it can generalize well enough that a second stage may not be needed.
+You're absolutely right in pointing out the value of a two-stage architecture for real-world deployment. In our experience, the need for this setup often depends on how the model handles its input space. When trained with key market parameters (like interest rates and volatility) as part of the input, the model typically generalizes well enough that a second stage may not be necessary.
 
-But for solvers that require fixed parameters, your suggested approach is very effective. We've found that using a model trained on the previous day’s data as a warm start lets us fine-tune quickly, since market shifts are usually small.
+However, for solvers with fixed parameters, your suggested approach proves very effective. We’ve found that initializing the model with previous day’s weights enables quick fine-tuning, as market shifts tend to be incremental. For more significant changes, we maintain a pretrained library across a grid of parameters and fine-tune the closest match—striking a balance between accuracy and responsiveness for intraday updates.
 
-For larger changes, we can pretrain a model library across a grid of parameters and pick the closest one to fine-tune. This hybrid method balances accuracy and efficiency and works well for intraday recalibration.
+It means a lot to receive your feedback — thank you for taking the time to engage with my presentation.
 
-I truly appreciate your question — it reflects exactly the kind of practical integration we’ve been thinking about.
+Best regards,
+Annie
 
-Best,
+
 Annie
 
