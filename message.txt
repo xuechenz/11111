@@ -1,1 +1,2 @@
-Hi Keonhi, I have implemented a script that aim to fetch 5 years spot data and calculate the intraday difference. However, I failed to connect to the server for data, do you have any idea how to write the correct connectionString so I can run the script.
+I've completed building the XBBG comparison pipeline. Once I’m able to connect to our server for spot data, I’ll start generating the comparisons for the tickers you shared.
+
