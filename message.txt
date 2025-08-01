@@ -1,2 +1,2 @@
 I've completed building the XBBG comparison pipeline. Once I’m able to connect to our server for spot data, I’ll start generating the comparisons for the tickers you shared.
-
+To optimize API usage, my approach identifies days in the original spot dataset where the intraday move exceeded 10%, and only fetches adjustments from XBBG for those specific days.
