@@ -4,7 +4,7 @@ from pandas.tseries.offsets import BDay
 from xbbg import blp
 
 BASE = os.path.join(os.getcwd(), "Spot_data")
-TICKERS = ["TTD US Equity"]         
+TICKERS = ["PCG.US Equity"]         
 
 def fetch_bbg_px_last_adj(ticker: str, start: str, end: str) -> pd.DataFrame:
     df = blp.bdh(
