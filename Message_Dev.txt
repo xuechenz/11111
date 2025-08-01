@@ -1,16 +1,14 @@
 Hi Dev,
 Thank you so much for the kind words and your thoughtful question — I really appreciate it.
 
-I completely agree that the idea of a two-stage architecture offers a compelling and practical solution, especially when deploying these models in a real-time or production environment. In our experience, the need for such a setup depends largely on the flexibility of the model with respect to market parameters.
+You're absolutely right in highlighting the potential of a two-stage architecture for practical deployment. In fact, we found that the necessity of such a setup largely depends on how the model handles input parameters. If the model is trained to take all key market parameters (like rate and volatility) as inputs, it can generalize well enough that a second stage may not be needed.
 
-When the model is trained to take all key parameters — such as interest rate and volatility — as input features, it gains the ability to generalize across a wide range of market conditions. In these cases, a single, well-trained model can often accommodate daily fluctuations, making a second stage unnecessary.
+But for solvers that require fixed parameters, your suggested approach is very effective. We've found that using a model trained on the previous day’s data as a warm start lets us fine-tune quickly, since market shifts are usually small.
 
-However, not all methods support such parameterized training. Some solvers still require the PDE to be defined with fixed parameter values. For these cases, your suggested two-stage setup becomes particularly effective. One practical approach we've explored is to use the model trained on yesterday’s market parameters as a warm start. Since market conditions typically evolve gradually, the difference between yesterday’s and today’s inputs is often small. This allows us to fine-tune the pretrained model using today’s parameters, enabling much faster convergence than training from scratch. 
+For larger changes, we can pretrain a model library across a grid of parameters and pick the closest one to fine-tune. This hybrid method balances accuracy and efficiency and works well for intraday recalibration.
 
-When the market changes more significantly — for instance, a large shift in interest rate or implied volatility — we can instead pretrain a library of models across a grid of plausible parameter values. At runtime, we can select the closest match to current conditions as the base model and retrain from there. This hybrid strategy balances accuracy and efficiency, making it well-suited for intraday updates or frequent recalibrations.
+Thanks again — your question really aligns with how we’re thinking about deployment.
 
-I truly appreciate your question — it reflects exactly the kind of practical integration we’ve been thinking about.
-
-Warm regards,
-Annie Zhang
+Best,
+Annie
 
