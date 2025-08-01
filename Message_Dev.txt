@@ -1,5 +1,6 @@
 Hi Dev,
-Thank you so much for the kind words and your thoughtful question — I really appreciate it.
+
+I truly appreciate your question — it reflects exactly the kind of practical integration we’ve been thinking about.
 
 You're absolutely right in highlighting the potential of a two-stage architecture for practical deployment. In fact, we found that the necessity of such a setup largely depends on how the model handles input parameters. If the model is trained to take all key market parameters (like rate and volatility) as inputs, it can generalize well enough that a second stage may not be needed.
 
