@@ -1,17 +1,45 @@
-Subject: Annie’s GED Presentation – Wednesday at 2:30 PM
+Subject: Spot Price Anomaly Detection – TD vs. Bloomberg (Scripts Attached)
 
-Hi everyone,
+Hi [Mentor's Name],
 
-I’ll be giving a short presentation this Wednesday at 2:30 PM to wrap up my summer rotation with the GED team — would love for you to join if you’re available!
+I’ve completed both scripts for the spot price discrepancy task and wanted to share them with you for your review.
 
-Time: Wednesday, August 7th, 2:30–3:00 PM
-Location: [e.g. 1V – Room 23A / Teams link]
-Topic: GED Summer Highlights – Tools, Research & Takeaways
+Script 1 – spot_td_pull.py
 
-I’ll be walking through some of the work I’ve done this summer — including updates to the GED Manager dashboard and Vega map tool, research on SPX futures and corporate action-adjusted spot prices, and a few takeaways from learning more about structured notes through conversations on the floor.
+Pulls 5 years of daily unadjusted spot prices from TD’s internal database using SQL
 
-Thanks so much for all your support these past few weeks. Looking forward to seeing you there!
+Calculates intraday high/low range to identify dates with more than 10% movement
 
-Best,
+Outputs two files:
+
+spot_5y.csv: full 5-year TD spot price history
+
+intraday_gt10pct.csv: dates with ≥10% intraday movement
+
+Note: Since I don’t have access to the internal database, I wasn’t able to run or test this script, so it may still require debugging.
+
+Script 2 – spot_compare_bbg.py
+
+Uses the dates identified in Script 1
+
+Pulls Bloomberg’s adjusted spot prices for comparison using the xbbg package
+
+Calculates daily returns and labels each flagged event into categories such as:
+
+Missing_Adjustment_Suspect – large move in TD but not in Bloomberg
+
+True_Move – large move in both TD and Bloomberg
+
+DataGap_BBG – missing data on the Bloomberg side
+
+Output: bbg_compare.csv with side-by-side comparison and labels
+
+Design Note:
+I structured the process into two standalone scripts to clearly separate anomaly detection from validation. This modular design makes it easier to debug, rerun, or adapt each part independently. For example, the Bloomberg comparison can be re-executed using previously saved TD data, without needing to pull from the internal database again.
+
+Please let me know if you’d like to review the logic together, or if there’s anything you’d like me to adjust.
+
+Best regards,
 Annie
+
 
