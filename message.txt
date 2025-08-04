@@ -1,2 +1,17 @@
-I've completed building the XBBG comparison pipeline. Once I’m able to connect to our server for spot data, I’ll start generating the comparisons for the tickers you shared.
-To optimize API usage, my approach identifies days in the original spot dataset where the intraday move exceeded 10%, and only fetches adjustments from XBBG for those specific days.
+Subject: Annie’s GED Presentation – Wednesday at 2:30 PM
+
+Hi everyone,
+
+I’ll be giving a short presentation this Wednesday at 2:30 PM to wrap up my summer rotation with the GED team — would love for you to join if you’re available!
+
+Time: Wednesday, August 7th, 2:30–3:00 PM
+Location: [e.g. 1V – Room 23A / Teams link]
+Topic: GED Summer Highlights – Tools, Research & Takeaways
+
+I’ll be walking through some of the work I’ve done this summer — including updates to the GED Manager dashboard and Vega map tool, research on SPX futures and corporate action-adjusted spot prices, and a few takeaways from learning more about structured notes through conversations on the floor.
+
+Thanks so much for all your support these past few weeks. Looking forward to seeing you there!
+
+Best,
+Annie
+
