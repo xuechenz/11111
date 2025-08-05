@@ -1,14 +1,16 @@
-Hi Dev,
+Subject: Annie’s GED Presentation – Wednesday at 2:30 PM
 
-I hope you’re doing well. As my internship is coming to an end this week, I was wondering if you might have a few minutes for a quick chat.
+Hi everyone,
 
-I’d really like to thank you in person for the opportunity to intern in QMA, and also hear your thoughts on career development as I plan my next steps. It’s been a truly valuable summer, and I’ve learned a lot from being part of the team.
+I’m Annie, a quant intern currently rotating with the GED team. I’ll be giving a short presentation this Wednesday at 2:30 PM to wrap up my summer rotation — would love for you to join if you’re available!
 
-Please let me know if there’s a time that works best for you — I’m happy to work around your schedule.
+Time: Wednesday, August 7th, 2:30–3:00 PM
+Location: [e.g. 1V – Room 23A / Teams link]
+Topic: GED Summer Highlights – Tools, Research & Takeaways
 
-Best regards,
+I’ll be sharing some of my summer projects, including enhancements to the GED Manager dashboard, development of a Vega map tool, and coding work on corporate action-adjusted spot prices in TD’s database.
+
+Thanks so much for all your support these past few weeks. Looking forward to seeing you there!
+
+Best,
 Annie
-
-
-Hi Robert, the conversation went really well!
-ZY walked me through some of the curve and UQL library work — I didn’t fully get all the implementation details, but I understood the main challenges they’re facing. I also told him I’d love to get involved, and he was very welcoming. He mentioned attitude is the most important, and headcount wouldn’t be a blocker if I were to join in the future
