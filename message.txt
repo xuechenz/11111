@@ -9,3 +9,6 @@ Please let me know if there’s a time that works best for you — I’m happy t
 Best regards,
 Annie
 
+
+Hi Robert, the conversation went really well!
+ZY walked me through some of the curve and UQL library work — I didn’t fully get all the implementation details, but I understood the main challenges they’re facing. I also told him I’d love to get involved, and he was very welcoming. He mentioned attitude is the most important, and headcount wouldn’t be a blocker if I were to join in the future
