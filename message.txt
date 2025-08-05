@@ -1,16 +1,8 @@
-Subject: Annie’s GED Presentation – Wednesday at 2:30 PM
+Hi Dev,
 
-Hi everyone,
+Thank you for letting me know. If it’s convenient for you, I’d be happy to stop by at Park 125 this afternoon. Please let me know if there’s a time that works best for you.
 
-I’m Annie, a quant intern currently rotating with the GED team. I’ll be giving a short presentation this Wednesday at 2:30 PM to wrap up my summer rotation — would love for you to join if you’re available!
-
-Time: Wednesday, August 7th, 2:30–3:00 PM
-Location: [e.g. 1V – Room 23A / Teams link]
-Topic: GED Summer Highlights – Tools, Research & Takeaways
-
-I’ll be sharing some of my summer projects, including enhancements to the GED Manager dashboard, development of a Vega map tool, and coding work on corporate action-adjusted spot prices in TD’s database.
-
-Thanks so much for all your support these past few weeks. Looking forward to seeing you there!
-
-Best,
+Best regards,
 Annie
+
+
