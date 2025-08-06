@@ -1,10 +1,9 @@
-Hi Eugine,
+Subject: Spot Price Discrepancy Scripts – Corporate Action Adjustments
 
-I’m sending you three files:
-Spot.py – pulls the past 5 years of intraday spot data from the TD database.
-Xbbg.py – fetches TD tickers from Bloomberg where the intraday change exceeds 10%.
-Pipeline – based on TED_Spot.py.
-At the moment, I can’t run TED_Spot.py — it returns a “server connection refused” error. Could this be due to incorrect credentials? If so, could you advise how I can check or update them?
+Hi Eugene,
 
-Thanks,
-Annie
+Hope you’re doing well!
+
+I’ve been working on a small project investigating spot price discrepancies caused by the lack of corporate action adjustments in our internal database. I’ve drafted two scripts for this, but since I don’t have access to the TED database, I haven’t been able to run or test them — they may still require debugging. Attaching the scripts here in case they’re helpful; please let me know if anything needs to be adjusted for your use.
+
+Happy to adjust anything if needed, and please feel free to reach out with any questions.
