@@ -1,9 +1,6 @@
-Subject: Spot Price Discrepancy Scripts – Corporate Action Adjustments
+Detects abnormal daily moves (≥10%) and flags them automatically
 
-Hi Eugene,
+Checks Bloomberg only for flagged dates — saves time & API calls
 
-Hope you’re doing well!
+Runs continuously to keep spot data clean without manual review
 
-I’ve been working on a small project investigating spot price discrepancies caused by the lack of corporate action adjustments in our internal database. I’ve drafted two scripts for this, but since I don’t have access to the TED database, I haven’t been able to run or test them — they may still require debugging. Attaching the scripts here in case they’re helpful; please let me know if anything needs to be adjusted for your use.
-
-Happy to adjust anything if needed, and please feel free to reach out with any questions.
