@@ -1,14 +1,10 @@
-Hi Zhongguo, apologies for the delay — I didn’t have my resume on this laptop last week, and I also wanted to update it with my latest TD experience before sending. I’ve just emailed you the updated version — please let me know if you have any trouble opening it.
+Hi Eugine,
 
-Hi Zhongguo,
+I’m sending you three files:
+Spot.py – pulls the past 5 years of intraday spot data from the TD database.
+Xbbg.py – fetches TD tickers from Bloomberg where the intraday change exceeds 10%.
+Pipeline – based on TED_Spot.py.
+At the moment, I can’t run TED_Spot.py — it returns a “server connection refused” error. Could this be due to incorrect credentials? If so, could you advise how I can check or update them?
 
-Apologies for the delay — I didn’t have my resume on this laptop last week, and I also took the opportunity to update it with my latest TD experience before sending.
-
-Thank you again for taking the time to walk me through the UQL library when we spoke — I really appreciated how patient and detailed you were. I’d love to work with you on it and learn from you if the chance comes up.
-
-Please find my updated resume attached.
-
-Best regards,
-Annie Xuechen Zhang
-
-
+Thanks,
+Annie
