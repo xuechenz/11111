@@ -1,20 +1,8 @@
-Final Deliverables – Summer Projects
+Please let me know if anything’s missing or if you have any trouble accessing the files.
 
-Hi [Team / All / Robert, Jasdeep, Keonhi], (根据你是否群发决定怎么写称呼)
+I feel very lucky to have been part of the team — thank you again for all the support and mentorship.
+I’d love to stay in touch and hope our paths cross again in the future.
 
-As today is my last day, I’ve zipped all the materials from my summer projects with GED and attached them here for your reference. The folder includes:
-
-Code and documentation for the Vega Map Generator
-
-GED Manager dashboard updates
-
-Spot price adjustment scripts
-
-Final presentation slides and report
-
-Please let me know if anything is missing or if you have any trouble accessing the files.
-
-Thank you again for the opportunity and all the support this summer — I’ve learned so much and truly enjoyed working with the team.
-
-Best regards,
+Best,
 Annie
+
