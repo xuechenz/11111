@@ -1,1 +1,3 @@
 Thanks Ian — this is super helpful. Filtering by currency and sector and laying out the term structure horizontally by ticker makes a lot of sense, especially for Totem views. I’ll bring this back to the team and see how we can incorporate it in the next iteration!
+
+Also, just a quick note — today is actually my last day of the internship, and I’ll be deactivated shortly. But I’ll make sure to pass this along to the team as part of the handover. If anything else comes up, feel free to reach out to the NY team!
