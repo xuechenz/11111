@@ -1,38 +1,20 @@
-Hi Ian,
+Final Deliverables – Summer Projects
 
-Thanks for the question – here’s exactly where each data series comes from and how we pull it:
+Hi [Team / All / Robert, Jasdeep, Keonhi], (根据你是否群发决定怎么写称呼)
 
-Database & Collection
-We use a single MongoDB instance and query the option chain collection via our conn (aka TotemOptionResults) connector.
+As today is my last day, I’ve zipped all the materials from my summer projects with GED and attached them here for your reference. The folder includes:
 
-1. IV Benchmark
-TD fitting: pulled from ClientImpliedVolatility (our internal implied-vol fit)
-Totem consensus: pulled from ConsensusImpliedVolatility (Totem’s consensus IV)
-Pull process:
-1.conn queries by Underlying, ValuationDate, OptionType, etc.
-2.We extract both fields across all strikes/tenors.
-3.Rebuild into a tenor-by-strike matrix and compute TD minus Totem for the heatmap.
+Code and documentation for the Vega Map Generator
 
-2. DIV Benchmark
-TD marks: pulled from ClientDividendYield (our internal dividend yield)
-Totem consensus: pulled from ConsensusDividendYield (Totem’s consensus yield)
-Pull process:
-1.Query the same collection via conn.
-2.Read both fields for each tenor.
-3.Plot TD vs. Totem on the tenor axis and generate the summary table.
+GED Manager dashboard updates
 
-3. Repo Benchmark
-TD marks: pulled from ClientImpliedForward (our internal implied-forward/repo rate)
-Totem consensus: pulled from ConsensusImpliedForward (Totem’s consensus forward rate)
-Pull process:
-1.Pull records with conn.
-2.Extract those two fields by tenor.
-3.Annualize each tenor’s rate and chart TD vs. Totem.
+Spot price adjustment scripts
 
-Note:
-All fields live in the same option chain collection—no external CSVs or other APIs.
-If a ticker (e.g. certain CA symbols) or a data field (e.g. dividends) isn’t present, the query returns empty and the UI simply shows “no data.”
-Hope this clarifies where each data series comes from. Let me know if you need any more detail!
+Final presentation slides and report
 
-Best, 
+Please let me know if anything is missing or if you have any trouble accessing the files.
+
+Thank you again for the opportunity and all the support this summer — I’ve learned so much and truly enjoyed working with the team.
+
+Best regards,
 Annie
